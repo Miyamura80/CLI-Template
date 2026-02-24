@@ -101,6 +101,9 @@ all: check_uv ## Sync dependencies and run main application
 	@$(PYTHON) main.py
 	@echo "$(GREEN)✅ Main application run completed.$(RESET)"
 
+cli: check_uv ## Run the CLI (pass ARGS="..." for arguments)
+	@$(PYTHON) -m cli $(ARGS)
+
 docs: ## Run docs with bun
 	@echo "$(GREEN)📚Running docs...$(RESET)"
 	@cd docs && bun run dev

@@ -95,6 +95,21 @@ class LoggingConfig(BaseModel):
     redaction: RedactionConfig = Field(default_factory=lambda: RedactionConfig())
 
 
+class TelemetryConfig(BaseModel):
+    """Telemetry configuration."""
+
+    enabled: bool = True
+    endpoint: str | None = None
+
+
+class CliConfig(BaseModel):
+    """CLI configuration."""
+
+    default_format: str = "table"
+    interactive_fallback: bool = True
+    check_updates_on_start: bool = False
+
+
 class FeaturesConfig(BaseModel):
     """Feature flags configuration."""
 

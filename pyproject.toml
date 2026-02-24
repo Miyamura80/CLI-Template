@@ -35,9 +35,13 @@ dependencies = [
     "typer",
     "questionary",
     "rich>=14.3.1",
+    "packaging>=24.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.12"
+
+[project.scripts]
+mycli = "cli:main_cli"
 
 [build-system]
 requires = ["hatchling"]
@@ -47,7 +51,7 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src", "common", "utils"]
+packages = ["src", "common", "utils", "commands"]
 
 [tool.ruff]
 line-length = 88
@@ -90,14 +94,22 @@ exclude = [
     "common/",
     "src/utils/logging_config.py",
     "src/utils/context.py",
+    "src/utils/interactive.py",
+    "src/utils/progress.py",
+    "src/utils/output.py",
+    "src/utils/errors.py",
     "tests/conftest.py",
     "init/",
-    "onboard.py"
+    "onboard.py",
+    "commands/",
+    "src/cli/",
+    "cli.py",
+    "templates/"
 ]
 
 [tool.coverage.run]
 branch = true
-source = ["src", "common", "utils"]
+source = ["src", "common", "utils", "commands"]
 omit = [
     "tests/*",
     "docs/*",
