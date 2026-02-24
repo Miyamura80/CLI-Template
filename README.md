@@ -40,7 +40,6 @@ Opinionated Python CLI template for fast development. The `saas` branch extends 
 | Feature | `main` | `saas` |
 |---------|:------:|:------:|
 | Auto-discovery command system | ✅ | ✅ |
-| Global flags (--verbose, --format, --dry-run) | ✅ | ✅ |
 | Interactive fallback prompts | ✅ | ✅ |
 | Shell completions | ✅ | ✅ |
 | Self-update | ✅ | ✅ |
