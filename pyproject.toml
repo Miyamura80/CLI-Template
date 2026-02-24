@@ -1,7 +1,7 @@
 [project]
-name = "python-template"
+name = "cli-template"
 version = "0.1.0"
-description = "Add your description here"
+description = "🪛 CLI tool template (python) with batteries included. Auto-install, updates, linting, dead code analysis, and a whole lot more."
 authors = [
     { name = "Miyamura80", email = "eitomiyamura@gmail.com" }
 ]

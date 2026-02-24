@@ -323,6 +323,87 @@ wheels = [
 ]
 
 [[package]]
+name = "cli-template"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "deptry" },
+    { name = "dspy" },
+    { name = "google-genai" },
+    { name = "human-id" },
+    { name = "import-linter" },
+    { name = "langfuse" },
+    { name = "litellm" },
+    { name = "loguru" },
+    { name = "numpy" },
+    { name = "openfeature-sdk" },
+    { name = "pillow" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pylint" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-env" },
+    { name = "pytest-repeat" },
+    { name = "pytest-xdist" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+    { name = "questionary" },
+    { name = "rich" },
+    { name = "scrubadub" },
+    { name = "tenacity" },
+    { name = "termcolor" },
+    { name = "ty" },
+    { name = "typer" },
+    { name = "vulture" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pre-commit" },
+    { name = "pytest-check-links" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deptry", specifier = ">=0.23.0" },
+    { name = "dspy", specifier = ">=3.1.2" },
+    { name = "google-genai", specifier = ">=1.60.0" },
+    { name = "human-id", specifier = ">=0.2.0" },
+    { name = "import-linter", specifier = ">=2.1.1" },
+    { name = "langfuse", specifier = ">=3.12.1" },
+    { name = "litellm", specifier = ">=1.59.8" },
+    { name = "loguru", specifier = ">=0.7.3" },
+    { name = "numpy", specifier = ">=2.2.2" },
+    { name = "openfeature-sdk", specifier = ">=0.7.1" },
+    { name = "pillow", specifier = ">=12.1.0" },
+    { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pydantic-settings", specifier = ">=2.7.1" },
+    { name = "pylint", specifier = ">=3.3.3" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "pytest-env", specifier = ">=1.2.0" },
+    { name = "pytest-repeat", specifier = ">=0.9.3" },
+    { name = "pytest-xdist", specifier = ">=3.6.1" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "questionary" },
+    { name = "rich", specifier = ">=14.3.1" },
+    { name = "scrubadub", specifier = ">=2.0.1" },
+    { name = "tenacity", specifier = ">=9.0.0" },
+    { name = "termcolor", specifier = ">=2.5.0" },
+    { name = "ty", specifier = ">=0.0.14" },
+    { name = "typer" },
+    { name = "vulture", specifier = ">=2.14" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pytest-check-links", specifier = ">=0.9.1" },
+]
+
+[[package]]
 name = "click"
 version = "8.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2238,87 +2319,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/15/7f/96c2b9de6024353177dc6139c33730d5ac25877bc33215515d6b95b84555/python_stdnum-2.2.tar.gz", hash = "sha256:e95fcfa858a703d4a40130cb3eaac133c60d8808a7f3c98efeedac968c2479b9", size = 1311813, upload-time = "2026-01-04T19:36:16.753Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2f/61/aa32d9c79f83a2fae033cd6496fb2a24aba918d31c73704271dfcfb48375/python_stdnum-2.2-py3-none-any.whl", hash = "sha256:bdf98fd117a0ca152e4047aa8ad254bae63853d4e915ddd4e0effb33ba0e9260", size = 1193213, upload-time = "2026-01-04T19:36:14.812Z" },
-]
-
-[[package]]
-name = "python-template"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "deptry" },
-    { name = "dspy" },
-    { name = "google-genai" },
-    { name = "human-id" },
-    { name = "import-linter" },
-    { name = "langfuse" },
-    { name = "litellm" },
-    { name = "loguru" },
-    { name = "numpy" },
-    { name = "openfeature-sdk" },
-    { name = "pillow" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "pylint" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-env" },
-    { name = "pytest-repeat" },
-    { name = "pytest-xdist" },
-    { name = "python-dotenv" },
-    { name = "pyyaml" },
-    { name = "questionary" },
-    { name = "rich" },
-    { name = "scrubadub" },
-    { name = "tenacity" },
-    { name = "termcolor" },
-    { name = "ty" },
-    { name = "typer" },
-    { name = "vulture" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pre-commit" },
-    { name = "pytest-check-links" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "deptry", specifier = ">=0.23.0" },
-    { name = "dspy", specifier = ">=3.1.2" },
-    { name = "google-genai", specifier = ">=1.60.0" },
-    { name = "human-id", specifier = ">=0.2.0" },
-    { name = "import-linter", specifier = ">=2.1.1" },
-    { name = "langfuse", specifier = ">=3.12.1" },
-    { name = "litellm", specifier = ">=1.59.8" },
-    { name = "loguru", specifier = ">=0.7.3" },
-    { name = "numpy", specifier = ">=2.2.2" },
-    { name = "openfeature-sdk", specifier = ">=0.7.1" },
-    { name = "pillow", specifier = ">=12.1.0" },
-    { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "pydantic-settings", specifier = ">=2.7.1" },
-    { name = "pylint", specifier = ">=3.3.3" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "pytest-env", specifier = ">=1.2.0" },
-    { name = "pytest-repeat", specifier = ">=0.9.3" },
-    { name = "pytest-xdist", specifier = ">=3.6.1" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "questionary" },
-    { name = "rich", specifier = ">=14.3.1" },
-    { name = "scrubadub", specifier = ">=2.0.1" },
-    { name = "tenacity", specifier = ">=9.0.0" },
-    { name = "termcolor", specifier = ">=2.5.0" },
-    { name = "ty", specifier = ">=0.0.14" },
-    { name = "typer" },
-    { name = "vulture", specifier = ">=2.14" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pre-commit", specifier = ">=4.5.1" },
-    { name = "pytest-check-links", specifier = ">=0.9.1" },
 ]
 
 [[package]]
