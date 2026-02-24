@@ -5,6 +5,7 @@ from types import TracebackType
 
 from rich.console import Console
 from rich.panel import Panel
+from rich.traceback import Traceback
 
 console = Console(stderr=True)
 
@@ -32,12 +33,13 @@ def _friendly_handler(
 def _debug_handler(
     exc_type: type[BaseException],
     exc_value: BaseException,
-    _exc_tb: TracebackType | None,
+    exc_tb: TracebackType | None,
 ) -> None:
     if exc_type is KeyboardInterrupt:
         console.print("\n[dim]Interrupted.[/dim]")
         return
-    console.print_exception(show_locals=True)
+    tb = Traceback.from_exception(exc_type, exc_value, exc_tb, show_locals=True)
+    console.print(tb)
 
 
 def install_error_handler(debug: bool = False) -> None:

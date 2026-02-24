@@ -95,15 +95,16 @@ def main(
     install_error_handler(debug=debug)
 
 
-_commands_registered = False
+_builtins_registered = False
+_user_commands_registered = False
 
 
 def _register_builtin_commands() -> None:
     """Register built-in CLI commands (idempotent)."""
-    global _commands_registered  # noqa: PLW0603
-    if _commands_registered:
+    global _builtins_registered  # noqa: PLW0603
+    if _builtins_registered:
         return
-    _commands_registered = True
+    _builtins_registered = True
 
     from src.cli.completions import app as completions_app
     from src.cli.scaffold import init_command
@@ -117,7 +118,12 @@ def _register_builtin_commands() -> None:
 
 
 def _register_user_commands() -> None:
-    """Discover and register user commands from commands/."""
+    """Discover and register user commands from commands/ (idempotent)."""
+    global _user_commands_registered  # noqa: PLW0603
+    if _user_commands_registered:
+        return
+    _user_commands_registered = True
+
     from commands import discover_commands
 
     discover_commands(app)
