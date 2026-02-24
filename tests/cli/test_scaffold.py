@@ -37,7 +37,7 @@ class TestScaffold(TestTemplate):
     def test_init_rejects_duplicate(self):
         target = _COMMANDS_DIR / "test_dup_cmd.py"
         try:
-            runner.invoke(app, ["init", "test_dup_cmd"])
+            target.write_text("# existing command\n")
             result = runner.invoke(app, ["init", "test_dup_cmd"])
             assert result.exit_code == 1
         finally:

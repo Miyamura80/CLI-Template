@@ -95,8 +95,16 @@ def main(
     install_error_handler(debug=debug)
 
 
+_commands_registered = False
+
+
 def _register_builtin_commands() -> None:
-    """Register built-in CLI commands."""
+    """Register built-in CLI commands (idempotent)."""
+    global _commands_registered  # noqa: PLW0603
+    if _commands_registered:
+        return
+    _commands_registered = True
+
     from src.cli.completions import app as completions_app
     from src.cli.scaffold import init_command
     from src.cli.telemetry import app as telemetry_app
