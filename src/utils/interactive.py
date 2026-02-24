@@ -2,6 +2,7 @@
 
 import inspect
 import sys
+import types
 from functools import wraps
 from typing import Any, get_type_hints
 
@@ -11,7 +12,7 @@ import questionary
 def _resolve_hint(hint: Any) -> Any:
     """Unwrap Optional[X] to X and return the base type hint."""
     origin = getattr(hint, "__origin__", None)
-    if origin is type(int | str):
+    if origin is types.UnionType:
         hint_args = getattr(hint, "__args__", ())
         non_none = [a for a in hint_args if a is not type(None)]
         return non_none[0] if non_none else str
