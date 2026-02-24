@@ -404,6 +404,31 @@ def env() -> None:
     )
 
 
+def _ensure_prek() -> None:
+    """Prompt to install prek if not found on PATH."""
+    if shutil.which("prek"):
+        return
+    rprint("[yellow]⚠ prek is not installed.[/yellow]")
+    install = questionary.confirm(
+        "Install prek via 'uv tool install prek'?",
+        default=True,
+    ).ask()
+    if install is None:
+        raise typer.Abort()
+    if not install:
+        rprint("[red]✗ prek is required for pre-commit hooks.[/red]")
+        raise typer.Exit(code=1)
+    result = subprocess.run(
+        ["uv", "tool", "install", "prek"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        rprint(f"[red]✗ Failed to install prek:[/red]\n{result.stderr}")
+        raise typer.Exit(code=1)
+    rprint("[green]✓ prek installed.[/green]")
+
+
 @app.command()
 def hooks() -> None:
     """Step 4: Activate pre-commit hooks."""
@@ -412,9 +437,7 @@ def hooks() -> None:
         rprint("[red]✗ prek.toml not found.[/red]")
         raise typer.Exit(code=1)
 
-    if not shutil.which("prek"):
-        rprint("[red]✗ prek is not installed. Install it from https://github.com/jdx/prek[/red]")
-        raise typer.Exit(code=1)
+    _ensure_prek()
 
     config = tomllib.loads(config_path.read_text())
 
