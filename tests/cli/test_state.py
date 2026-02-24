@@ -12,9 +12,10 @@ from src.cli.state import (
     output_format,
     verbosity,
 )
+from tests.test_template import TestTemplate
 
 
-class TestVerbosity:
+class TestVerbosity(TestTemplate):
     def test_default_is_normal(self):
         assert verbosity.get() == Verbosity.NORMAL
 
@@ -44,12 +45,12 @@ class TestVerbosity:
             verbosity.reset(token)
 
 
-class TestOutputFormat:
+class TestOutputFormat(TestTemplate):
     def test_default_is_table(self):
         assert output_format.get() == OutputFormat.TABLE
 
 
-class TestDryRun:
+class TestDryRun(TestTemplate):
     def test_default_is_false(self):
         assert not is_dry_run()
 

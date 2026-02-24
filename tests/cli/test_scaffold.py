@@ -5,6 +5,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from cli import _register_builtin_commands, _register_user_commands, app
+from tests.test_template import TestTemplate
 
 runner = CliRunner()
 
@@ -14,7 +15,7 @@ _register_user_commands()
 _COMMANDS_DIR = Path(__file__).parent.parent.parent / "commands"
 
 
-class TestScaffold:
+class TestScaffold(TestTemplate):
     def test_init_creates_file(self):
         target = _COMMANDS_DIR / "test_scaffold_cmd.py"
         try:

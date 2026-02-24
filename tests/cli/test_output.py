@@ -2,9 +2,10 @@
 
 from src.cli.state import OutputFormat, output_format
 from src.utils.output import render
+from tests.test_template import TestTemplate
 
 
-class TestRender:
+class TestRender(TestTemplate):
     def test_render_dict_as_table(self):
         token = output_format.set(OutputFormat.TABLE)
         try:
