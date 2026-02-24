@@ -1,11 +1,11 @@
-# Python-Template
+# cli-template
 
 <p align="center">
   <img src="media/banner.png" alt="2" width="400">
 </p>
 
 <p align="center">
-<b>Opinionated Python project stack. 🔋 Batteries included. </b>
+<b>🪛 CLI tool template (python) with batteries included. Auto-install, updates, linting, dead code analysis, and a whole lot more.</b>
 </p>
 
 <p align="center">

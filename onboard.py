@@ -5,11 +5,11 @@ import os
 import re
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 import questionary
 import typer
-import yaml
 from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
@@ -404,17 +404,44 @@ def env() -> None:
     )
 
 
+def _ensure_prek() -> None:
+    """Prompt to install prek if not found on PATH."""
+    if shutil.which("prek"):
+        return
+    rprint("[yellow]⚠ prek is not installed.[/yellow]")
+    install = questionary.confirm(
+        "Install prek via 'uv tool install prek'?",
+        default=True,
+    ).ask()
+    if install is None:
+        raise typer.Abort()
+    if not install:
+        rprint("[red]✗ prek is required for pre-commit hooks.[/red]")
+        raise typer.Exit(code=1)
+    result = subprocess.run(
+        ["uv", "tool", "install", "prek"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        rprint(f"[red]✗ Failed to install prek:[/red]\n{result.stderr}")
+        raise typer.Exit(code=1)
+    rprint("[green]✓ prek installed.[/green]")
+
+
 @app.command()
 def hooks() -> None:
     """Step 4: Activate pre-commit hooks."""
-    config_path = PROJECT_ROOT / ".pre-commit-config.yaml"
+    config_path = PROJECT_ROOT / "prek.toml"
     if not config_path.exists():
-        rprint("[red]✗ .pre-commit-config.yaml not found.[/red]")
+        rprint("[red]✗ prek.toml not found.[/red]")
         raise typer.Exit(code=1)
 
-    config = yaml.safe_load(config_path.read_text())
+    _ensure_prek()
 
-    table = Table(title="Configured Pre-commit Hooks")
+    config = tomllib.loads(config_path.read_text())
+
+    table = Table(title="Configured Pre-commit Hooks (prek)")
     table.add_column("Hook ID", style="cyan")
     table.add_column("Description", style="white")
 
@@ -436,7 +463,7 @@ def hooks() -> None:
 
     if activate:
         result = subprocess.run(
-            ["uv", "run", "pre-commit", "install"],
+            ["prek", "install"],
             cwd=PROJECT_ROOT,
             capture_output=True,
             text=True,
@@ -444,11 +471,11 @@ def hooks() -> None:
         if result.returncode != 0:
             rprint(f"[red]✗ Failed to activate hooks:[/red]\n{result.stderr}")
             raise typer.Exit(code=1)
-        rprint("[green]✓ Pre-commit hooks activated.[/green]")
+        rprint("[green]✓ Pre-commit hooks activated (prek).[/green]")
     else:
         rprint(
             "[yellow]Skipped.[/yellow] You can activate later with: "
-            "[bold]pre-commit install[/bold]"
+            "[bold]prek install[/bold]"
         )
 
 
