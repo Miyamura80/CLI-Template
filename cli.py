@@ -2,9 +2,11 @@
 
 import importlib.metadata
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated
 
 import typer
+import yaml
 
 from src.cli.state import (
     OutputFormat,
@@ -36,10 +38,25 @@ app = typer.Typer(
 )
 
 
+def _load_cli_branding() -> tuple[str, str]:
+    """Read emoji and primary color from global_config.yaml. Returns (emoji, primary_color)."""
+    try:
+        config_path = Path(__file__).parent / "common" / "global_config.yaml"
+        data = yaml.safe_load(config_path.read_text()) or {}
+        cli_conf = data.get("cli", {})
+        emoji = cli_conf.get("emoji", "") or ""
+        primary = cli_conf.get("primary_color", "cyan") or "cyan"
+        return emoji, primary
+    except Exception:
+        return "", "cyan"
+
+
 def _version_callback(value: bool) -> None:
     if value:
         version = importlib.metadata.version("cli-template")
-        typer.echo(f"mycli {version}")
+        emoji, _ = _load_cli_branding()
+        prefix = f"{emoji} " if emoji else ""
+        typer.echo(f"{prefix}mycli {version}")
         raise typer.Exit()
 
 
@@ -133,4 +150,13 @@ def main_cli() -> None:
     """Entry point called by the console script."""
     _register_builtin_commands()
     _register_user_commands()
+
+    version = importlib.metadata.version("cli-template")
+    emoji, primary = _load_cli_branding()
+    prefix = f"{emoji} " if emoji else ""
+    app.info.help = (
+        f"{prefix}[{primary}]CLI Template[/{primary}] "
+        f"[dim]v{version}[/dim] - a batteries-included Python CLI."
+    )
+
     app()

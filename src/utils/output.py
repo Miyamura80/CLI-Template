@@ -3,12 +3,12 @@
 import json
 from typing import Any
 
-from rich.console import Console
 from rich.table import Table
 
 from src.cli.state import OutputFormat, output_format
+from src.utils.theme import make_console
 
-console = Console()
+console = make_console()
 
 
 def render(data: Any, title: str = "") -> None:
@@ -49,7 +49,7 @@ def _render_plain(data: Any, title: str = "") -> None:
 def _render_table(data: Any, title: str = "") -> None:
     if isinstance(data, dict):
         table = Table(title=title or None)
-        table.add_column("Key", style="cyan")
+        table.add_column("Key", style="primary")
         table.add_column("Value", style="white")
         for key, value in data.items():
             table.add_row(str(key), str(value))
@@ -58,7 +58,7 @@ def _render_table(data: Any, title: str = "") -> None:
         table = Table(title=title or None)
         columns = list(data[0].keys())
         for col in columns:
-            table.add_column(col, style="cyan")
+            table.add_column(col, style="primary")
         for row in data:
             table.add_row(*(str(row.get(c, "")) for c in columns))
         console.print(table)
