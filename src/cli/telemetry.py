@@ -16,7 +16,7 @@ from rich.console import Console
 app = typer.Typer(no_args_is_help=True)
 console = Console(stderr=True)
 
-_CONFIG_DIR = Path.home() / ".config" / "cli-template"
+_CONFIG_DIR = Path.home() / ".config" / "miyamura80-cli-template"
 _TELEMETRY_FILE = _CONFIG_DIR / "telemetry.json"
 _STATE_FILE = _CONFIG_DIR / "state.json"
 _MAX_EVENTS = 1000
@@ -69,7 +69,7 @@ def record_event(command: str, duration: float, success: bool) -> None:
         "command": command,
         "duration_s": round(duration, 3),
         "success": success,
-        "cli_version": importlib.metadata.version("cli-template"),
+        "cli_version": importlib.metadata.version("miyamura80-cli-template"),
         "python_version": platform.python_version(),
         "os": platform.system(),
         "machine_id": _machine_id(),
