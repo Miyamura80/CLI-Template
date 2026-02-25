@@ -59,11 +59,11 @@ Opinionated Python CLI template for fast development. The `saas` branch extends 
 ## Quick Start
 
 ```bash
-make onboard          # interactive setup (rename, deps, env, hooks)
-uv sync               # install deps + register CLI
-mycli --help           # see all commands
-mycli greet Alice      # run a command
-mycli init my_command  # scaffold a new command
+make onboard              # interactive setup (rename, deps, env, hooks)
+uv sync                   # install deps
+uv run mycli --help       # see all commands
+uv run mycli greet Alice  # run a command
+uv run mycli init my_command  # scaffold a new command
 ```
 
 ## CLI Usage
@@ -80,9 +80,9 @@ Global flags go **before** the subcommand:
 | `--version` | `-V` | Print version and exit |
 
 ```bash
-mycli --format json config show     # JSON output
-mycli --dry-run greet Bob           # preview without executing
-mycli --verbose greet Alice         # detailed output
+uv run mycli --format json config show     # JSON output
+uv run mycli --dry-run greet Bob           # preview without executing
+uv run mycli --verbose greet Alice         # detailed output
 ```
 
 ## Adding Commands
@@ -102,7 +102,7 @@ def main(name: Annotated[str, typer.Argument(help="Who to greet.")]) -> None:
 ```
 
 ```bash
-mycli hello World   # Hello, World!
+uv run mycli hello World   # Hello, World!
 ```
 
 **Subcommand group** - export `app = typer.Typer()`:
@@ -120,10 +120,10 @@ def migrate() -> None:
 ```
 
 ```bash
-mycli db migrate
+uv run mycli db migrate
 ```
 
-Or scaffold with: `mycli init my_command --desc "Does something"`.
+Or scaffold with: `uv run mycli init my_command --desc "Does something"`.
 
 ## Configuration
 
@@ -140,9 +140,9 @@ global_config.OPENAI_API_KEY
 CLI config inspection:
 
 ```bash
-mycli config show                           # full config
-mycli config get llm_config.cache_enabled   # single value
-mycli config set logging.verbose false      # write override
+uv run mycli config show                           # full config
+uv run mycli config get llm_config.cache_enabled   # single value
+uv run mycli config set logging.verbose false      # write override
 ```
 
 [Full configuration docs](manual_docs/configuration.md)
