@@ -256,10 +256,11 @@ def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
             PROJECT_ROOT / "tests" / "cli" / "test_cli.py",
             [(f'"{old_name}"', f'"{new_name}"')],
         ),
-        (
-            PROJECT_ROOT / "README.md",
-            [(f" {old_name} ", f" {new_name} ")],
-        ),
+    ]
+
+    # Files where we use regex word-boundary replacement instead of literal
+    regex_replacements: list[tuple[Path, str, str]] = [
+        (PROJECT_ROOT / "README.md", rf"\b{re.escape(old_name)}\b", new_name),
     ]
 
     changes: list[str] = []
@@ -276,6 +277,17 @@ def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
             file_path.write_text(text)
             rel = file_path.relative_to(PROJECT_ROOT)
             changes.append(f"[green]{rel}[/green]")
+
+    for file_path, pattern, repl in regex_replacements:
+        if not file_path.exists():
+            continue
+        text = file_path.read_text()
+        new_text = re.sub(pattern, repl, text)
+        if new_text != text:
+            file_path.write_text(new_text)
+            rel = file_path.relative_to(PROJECT_ROOT)
+            if f"[green]{rel}[/green]" not in changes:
+                changes.append(f"[green]{rel}[/green]")
 
     return changes
 
@@ -320,7 +332,7 @@ def cli_name() -> None:
 
 @app.command()
 def deps() -> None:
-    """Step 2: Install project dependencies."""
+    """Step 3: Install project dependencies."""
     if not shutil.which("uv"):
         rprint(
             "[red]✗ uv is not installed.[/red]\n"
@@ -502,7 +514,7 @@ def _write_env_file(entries: list[dict[str, str]], values: dict[str, str]) -> in
 
 @app.command()
 def env() -> None:
-    """Step 3: Configure environment variables."""
+    """Step 4: Configure environment variables."""
     entries = _parse_env_example()
     if not entries:
         rprint("[red]✗ No .env.example found.[/red]")
@@ -561,7 +573,7 @@ def _ensure_prek() -> None:
 
 @app.command()
 def hooks() -> None:
-    """Step 4: Activate pre-commit hooks."""
+    """Step 5: Activate pre-commit hooks."""
     config_path = PROJECT_ROOT / "prek.toml"
     if not config_path.exists():
         rprint("[red]✗ prek.toml not found.[/red]")
@@ -657,7 +669,7 @@ def _run_media_generation(choice: str, project_name: str, theme: str) -> list[st
 
 @app.command()
 def media() -> None:
-    """Step 5: Generate banner and logo assets."""
+    """Step 6: Generate banner and logo assets."""
     if not _check_gemini_key():
         rprint("[yellow]⚠ GEMINI_API_KEY is not configured.[/yellow]")
         skip = questionary.confirm("Skip media generation?", default=True).ask()
@@ -733,7 +745,7 @@ def _disable_workflow(filename: str) -> None:
 
 @app.command()
 def jules() -> None:
-    """Step 6: Enable or disable automated Jules maintenance workflows."""
+    """Step 7: Enable or disable automated Jules maintenance workflows."""
     if not _WORKFLOWS_DIR.is_dir():
         rprint("[red]✗ .github/workflows/ directory not found.[/red]")
         raise typer.Exit(code=1)
