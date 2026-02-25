@@ -45,7 +45,7 @@ def _load_cli_branding() -> tuple[str, str]:
 
 def _version_callback(value: bool) -> None:
     if value:
-        version = importlib.metadata.version("cli-template")
+        version = importlib.metadata.version("miyamura80-cli-template")
         emoji, _ = _load_cli_branding()
         prefix = f"{emoji} " if emoji else ""
         typer.echo(f"{prefix}mycli {version}")
@@ -143,7 +143,7 @@ def main_cli() -> None:
     _register_builtin_commands()
     _register_user_commands()
 
-    version = importlib.metadata.version("cli-template")
+    version = importlib.metadata.version("miyamura80-cli-template")
     emoji, primary = _load_cli_branding()
     prefix = f"{emoji} " if emoji else ""
     app.info.help = (
