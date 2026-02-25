@@ -9,7 +9,7 @@ from rich.console import Console
 
 from src.utils.output import render
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 console = Console(stderr=True)
 
 _ROOT_DIR = Path(__file__).parent.parent
