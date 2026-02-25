@@ -2,11 +2,9 @@
 
 import importlib.metadata
 from enum import StrEnum
-from pathlib import Path
 from typing import Annotated
 
 import typer
-import yaml
 
 from src.cli.state import (
     OutputFormat,
@@ -39,16 +37,10 @@ app = typer.Typer(
 
 
 def _load_cli_branding() -> tuple[str, str]:
-    """Read emoji and primary color from global_config.yaml. Returns (emoji, primary_color)."""
-    try:
-        config_path = Path(__file__).parent / "common" / "global_config.yaml"
-        data = yaml.safe_load(config_path.read_text()) or {}
-        cli_conf = data.get("cli", {})
-        emoji = cli_conf.get("emoji", "") or ""
-        primary = cli_conf.get("primary_color", "cyan") or "cyan"
-        return emoji, primary
-    except Exception:
-        return "", "cyan"
+    """Read emoji and primary color from config. Returns (emoji, primary_color)."""
+    from src.utils.theme import get_cli_emoji, get_primary_color
+
+    return get_cli_emoji(), get_primary_color()
 
 
 def _version_callback(value: bool) -> None:
