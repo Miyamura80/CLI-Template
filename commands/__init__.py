@@ -5,6 +5,7 @@ import pkgutil
 from pathlib import Path
 
 import typer
+from loguru import logger as log
 
 
 def discover_commands(app: typer.Typer) -> None:
@@ -29,3 +30,7 @@ def discover_commands(app: typer.Typer) -> None:
             app.add_typer(module.app, name=command_name, help=help_text.strip())
         elif hasattr(module, "main") and callable(module.main):
             app.command(name=command_name)(module.main)
+        else:
+            log.warning(
+                f"commands/{module_info.name}.py has no 'app' (Typer) or 'main()' - skipped"
+            )
