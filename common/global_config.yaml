@@ -81,4 +81,4 @@ telemetry:
 cli:
   default_format: table
   interactive_fallback: true
-  check_updates_on_start: false
+  check_updates_on_start: true
