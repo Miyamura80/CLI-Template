@@ -3,7 +3,6 @@
 import importlib.metadata
 import json
 import subprocess
-import sys
 import urllib.request
 
 import typer
@@ -38,7 +37,7 @@ def update_command() -> None:
     console.print(f"New version available: [bold green]{latest_str}[/bold green]")
     try:
         subprocess.run(
-            [sys.executable, "-m", "uv", "pip", "install", "--upgrade", _PACKAGE_NAME],
+            ["uv", "pip", "install", "--upgrade", _PACKAGE_NAME],
             check=True,
         )
         console.print(f"[green]Updated to {latest_str}![/green]")
