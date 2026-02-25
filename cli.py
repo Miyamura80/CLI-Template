@@ -36,10 +36,19 @@ app = typer.Typer(
 )
 
 
+def _load_cli_branding() -> tuple[str, str]:
+    """Read emoji and primary color from config. Returns (emoji, primary_color)."""
+    from src.utils.theme import get_cli_emoji, get_primary_color
+
+    return get_cli_emoji(), get_primary_color()
+
+
 def _version_callback(value: bool) -> None:
     if value:
         version = importlib.metadata.version("cli-template")
-        typer.echo(f"mycli {version}")
+        emoji, _ = _load_cli_branding()
+        prefix = f"{emoji} " if emoji else ""
+        typer.echo(f"{prefix}mycli {version}")
         raise typer.Exit()
 
 
@@ -133,4 +142,13 @@ def main_cli() -> None:
     """Entry point called by the console script."""
     _register_builtin_commands()
     _register_user_commands()
+
+    version = importlib.metadata.version("cli-template")
+    emoji, primary = _load_cli_branding()
+    prefix = f"{emoji} " if emoji else ""
+    app.info.help = (
+        f"{prefix}[{primary}]CLI Template[/{primary}] "
+        f"[dim]v{version}[/dim] - a batteries-included Python CLI."
+    )
+
     app()

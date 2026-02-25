@@ -108,6 +108,9 @@ class CliConfig(BaseModel):
     default_format: str = "table"
     interactive_fallback: bool = True
     check_updates_on_start: bool = False
+    emoji: str = ""
+    primary_color: str = "cyan"
+    secondary_color: str = "green"
 
 
 class FeaturesConfig(BaseModel):

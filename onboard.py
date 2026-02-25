@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import random
 import re
 import shutil
 import subprocess
@@ -18,6 +19,27 @@ from rich.table import Table
 console = Console()
 
 PROJECT_ROOT = Path(__file__).parent
+
+# Branding configuration -------------------------------------------------------
+
+#: (name, primary_color, secondary_color, description)
+COLOR_PALETTES: list[tuple[str, str, str, str]] = [
+    ("Ocean", "bright_cyan", "blue", "Cool blues and teals"),
+    ("Forest", "bright_green", "green", "Natural greens"),
+    ("Sunset", "yellow", "bright_red", "Warm and fiery"),
+    ("Aurora", "bright_magenta", "bright_cyan", "Vibrant purples and teals"),
+    ("Rose", "bright_red", "magenta", "Warm pinks and reds"),
+    ("Gold", "bright_yellow", "yellow", "Rich golden tones"),
+    ("Slate", "bright_white", "cyan", "Clean whites with cyan"),
+    ("Midnight", "bright_blue", "blue", "Deep ocean blues"),
+]
+
+PRESET_EMOJIS: list[str] = [
+    "🚀", "⚡", "🔥", "🛠️", "🎯", "✨", "🌟", "💎",
+    "🦊", "🐉", "🌊", "🌿", "🔮", "🧪", "🎨", "🤖",
+]
+
+# ------------------------------------------------------------------------------
 
 app = typer.Typer(
     name="onboard",
@@ -59,6 +81,7 @@ def _read_cli_name() -> str:
 
 
 STEPS: list[tuple[str, str]] = [
+    ("Branding", "branding"),
     ("Rename", "rename"),
     ("CLI Name", "cli_name"),
     ("Dependencies", "deps"),
@@ -78,13 +101,14 @@ def _run_orchestrator() -> None:
         Panel(
             f"[bold]{project_name}[/bold]\n\n"
             "This wizard will guide you through:\n"
-            "  1. Rename - Set project name and description\n"
-            "  2. CLI Name - Choose the CLI command name\n"
-            "  3. Dependencies - Install project dependencies\n"
-            "  4. Environment - Configure API keys and secrets\n"
-            "  5. Hooks - Activate pre-commit hooks\n"
-            "  6. Media - Generate banner and logo assets\n"
-            "  7. Jules - Enable/disable automated maintenance workflows",
+            "  1. Branding - Pick emoji and colour scheme for the CLI\n"
+            "  2. Rename - Set project name and description\n"
+            "  3. CLI Name - Choose the CLI command name\n"
+            "  4. Dependencies - Install project dependencies\n"
+            "  5. Environment - Configure API keys and secrets\n"
+            "  6. Hooks - Activate pre-commit hooks\n"
+            "  7. Media - Generate banner and logo assets\n"
+            "  8. Jules - Enable/disable automated maintenance workflows",
             title="Welcome to Project Onboarding",
             border_style="blue",
         )
@@ -152,9 +176,135 @@ def main(ctx: typer.Context) -> None:
         _run_orchestrator()
 
 
+def _save_cli_branding(emoji: str, primary_color: str, secondary_color: str) -> None:
+    """Persist emoji and colour settings into common/global_config.yaml."""
+    config_path = PROJECT_ROOT / "common" / "global_config.yaml"
+    text = config_path.read_text()
+    text = re.sub(r'^  emoji:.*$', f'  emoji: "{emoji}"', text, flags=re.MULTILINE)
+    text = re.sub(
+        r'^  primary_color:.*$',
+        f'  primary_color: "{primary_color}"',
+        text,
+        flags=re.MULTILINE,
+    )
+    text = re.sub(
+        r'^  secondary_color:.*$',
+        f'  secondary_color: "{secondary_color}"',
+        text,
+        flags=re.MULTILINE,
+    )
+    config_path.write_text(text)
+
+
+def _pick_emoji() -> str:
+    """Prompt the user to pick or enter an emoji. Returns the chosen emoji."""
+    rprint("\n[bold]Pick an emoji for your CLI:[/bold]")
+    grid = "  ".join(PRESET_EMOJIS[:8]) + "\n  " + "  ".join(PRESET_EMOJIS[8:])
+    rprint(f"  {grid}\n")
+
+    emoji_choices = list(PRESET_EMOJIS) + ["✏️  Enter custom emoji"]
+    selected = questionary.select("Select an emoji:", choices=emoji_choices).ask()
+    if selected is None:
+        raise typer.Abort()
+    if selected == "✏️  Enter custom emoji":
+        selected = questionary.text("Enter your emoji:").ask()
+        if selected is None:
+            raise typer.Abort()
+    return selected
+
+
+def _pick_color_scheme() -> tuple[str, str]:
+    """Prompt the user to pick a colour scheme. Returns (primary_color, secondary_color)."""
+    rprint("\n[bold]Pick a colour scheme:[/bold]")
+    for name, primary, secondary, desc in COLOR_PALETTES:
+        rprint(
+            f"  [{primary}]■■■[/{primary}][{secondary}]■■■[/{secondary}]  "
+            f"[bold]{name}[/bold] – {desc}"
+        )
+    rprint()
+
+    palette_choices = [
+        f"{name} – {desc}" for name, primary, secondary, desc in COLOR_PALETTES
+    ]
+    palette_choices += ["🎲 Auto-generate (random)", "✏️  Enter custom colours"]
+
+    while True:
+        selection = questionary.select(
+            "Select a colour scheme:", choices=palette_choices
+        ).ask()
+        if selection is None:
+            raise typer.Abort()
+
+        if selection == "🎲 Auto-generate (random)":
+            result = _try_random_scheme()
+            if result is not None:
+                return result
+            continue  # Reroll or back to manual
+
+        if selection == "✏️  Enter custom colours":
+            return _enter_custom_colours()
+
+        # Named palette selected
+        for name, primary, secondary, desc in COLOR_PALETTES:
+            if selection == f"{name} – {desc}":
+                return primary, secondary
+
+    return "cyan", "green"  # unreachable – satisfies type checker
+
+
+def _try_random_scheme() -> tuple[str, str] | None:
+    """Show a randomly generated scheme and return colours, or None to loop again."""
+    name, primary, secondary, desc = random.choice(COLOR_PALETTES)
+    rprint(
+        f"\n  Generated: [bold]{name}[/bold] – {desc}\n"
+        f"  [{primary}]■■■ {primary}[/{primary}]  "
+        f"[{secondary}]■■■ {secondary}[/{secondary}]\n"
+    )
+    action = questionary.select(
+        "What would you like to do?",
+        choices=["✓ Use this scheme", "🎲 Reroll", "← Pick manually"],
+        default="✓ Use this scheme",
+    ).ask()
+    if action is None:
+        raise typer.Abort()
+    if action == "✓ Use this scheme":
+        return primary, secondary
+    return None  # Reroll or pick manually → caller loops
+
+
+def _enter_custom_colours() -> tuple[str, str]:
+    """Prompt for custom Rich colour names and return (primary, secondary)."""
+    rprint(
+        "[dim]  Enter Rich colour names (e.g. cyan, bright_green) "
+        "or hex (#ff0000)[/dim]"
+    )
+    primary = questionary.text("Primary colour:", default="cyan").ask() or "cyan"
+    secondary = questionary.text("Secondary colour:", default="green").ask() or "green"
+    return primary, secondary
+
+
+@app.command()
+def branding() -> None:
+    """Step 1: Choose CLI emoji and colour scheme."""
+    selected_emoji = _pick_emoji()
+    primary_color, secondary_color = _pick_color_scheme()
+
+    _save_cli_branding(selected_emoji, primary_color, secondary_color)
+
+    rprint(
+        Panel(
+            f"Emoji:           {selected_emoji}\n"
+            f"Primary colour:  [{primary_color}]{primary_color}[/{primary_color}]\n"
+            f"Secondary colour:[{secondary_color}]{secondary_color}[/{secondary_color}]",
+            title="✅ Branding Complete",
+            border_style="green",
+        )
+    )
+
+
 @app.command()
 def rename() -> None:
-    """Step 1: Rename the project and update metadata."""
+    """Step 2: Rename the project and update metadata."""
     current_name = _read_pyproject_name()
     if current_name != "python-template":
         rprint(
@@ -294,7 +444,7 @@ def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
 
 @app.command()
 def cli_name() -> None:
-    """Step 2: Choose the CLI command name (renames all 'mycli' references)."""
+    """Step 3: Choose the CLI command name (renames all 'mycli' references)."""
     current = _read_cli_name()
     if current != "mycli":
         rprint(
@@ -332,7 +482,7 @@ def cli_name() -> None:
 
 @app.command()
 def deps() -> None:
-    """Step 3: Install project dependencies."""
+    """Step 4: Install project dependencies."""
     if not shutil.which("uv"):
         rprint(
             "[red]✗ uv is not installed.[/red]\n"
@@ -514,7 +664,7 @@ def _write_env_file(entries: list[dict[str, str]], values: dict[str, str]) -> in
 
 @app.command()
 def env() -> None:
-    """Step 4: Configure environment variables."""
+    """Step 5: Configure environment variables."""
     entries = _parse_env_example()
     if not entries:
         rprint("[red]✗ No .env.example found.[/red]")
@@ -573,7 +723,7 @@ def _ensure_prek() -> None:
 
 @app.command()
 def hooks() -> None:
-    """Step 5: Activate pre-commit hooks."""
+    """Step 6: Activate pre-commit hooks."""
     config_path = PROJECT_ROOT / "prek.toml"
     if not config_path.exists():
         rprint("[red]✗ prek.toml not found.[/red]")
@@ -669,7 +819,7 @@ def _run_media_generation(choice: str, project_name: str, theme: str) -> list[st
 
 @app.command()
 def media() -> None:
-    """Step 6: Generate banner and logo assets."""
+    """Step 7: Generate banner and logo assets."""
     if not _check_gemini_key():
         rprint("[yellow]⚠ GEMINI_API_KEY is not configured.[/yellow]")
         skip = questionary.confirm("Skip media generation?", default=True).ask()
@@ -745,7 +895,7 @@ def _disable_workflow(filename: str) -> None:
 
 @app.command()
 def jules() -> None:
-    """Step 7: Enable or disable automated Jules maintenance workflows."""
+    """Step 8: Enable or disable automated Jules maintenance workflows."""
     if not _WORKFLOWS_DIR.is_dir():
         rprint("[red]✗ .github/workflows/ directory not found.[/red]")
         raise typer.Exit(code=1)
@@ -810,6 +960,7 @@ def jules() -> None:
 # Register step functions for the orchestrator
 STEP_FUNCTIONS.update(
     {
+        "branding": branding,
         "rename": rename,
         "cli_name": cli_name,
         "deps": deps,
