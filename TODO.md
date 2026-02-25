@@ -11,6 +11,6 @@
 
 ## PyPI Packaging & Publishing
 
-- [ ] Run through full PyPI packaging: verify `pyproject.toml` metadata (description, classifiers, URLs, license), build with `uv build`, and test install from the wheel
-- [ ] Do a test publish to TestPyPI (`uv publish --publish-url https://test.pypi.org/legacy/`) and verify `pip install --index-url https://test.pypi.org/simple/ cli-template` works end-to-end
-- [ ] Publish to PyPI and confirm `pip install cli-template` installs correctly with the `mycli` entry point working
+- [x] Run through full PyPI packaging: verify `pyproject.toml` metadata (description, classifiers, URLs, license), build with `uv build`, and test install from the wheel
+- [ ] Do a test publish to TestPyPI (`uv publish --publish-url https://test.pypi.org/legacy/`) and verify `uvx --from miyamura80-cli-template mycli --help` works end-to-end
+- [x] Publish to PyPI and confirm `uvx --from miyamura80-cli-template mycli --help` installs correctly with the `mycli` entry point working
