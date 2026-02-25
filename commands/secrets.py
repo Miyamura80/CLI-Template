@@ -1,5 +1,6 @@
 """Manage secrets via OS keyring."""
 
+import importlib.metadata
 import json
 from typing import Annotated
 
@@ -14,7 +15,17 @@ from src.utils.output import render
 app = typer.Typer(no_args_is_help=True)
 console = Console(stderr=True)
 
-_SERVICE_NAME = "mycli"
+
+def _get_cli_name() -> str:
+    """Derive CLI name from package console_scripts entry point."""
+    eps = importlib.metadata.entry_points(group="console_scripts")
+    for ep in eps:
+        if ep.dist and ep.dist.name == "cli-template":
+            return ep.name
+    return "mycli"
+
+
+_SERVICE_NAME = _get_cli_name()
 _KEYS_META = "__secret_keys__"
 
 
