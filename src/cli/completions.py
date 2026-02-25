@@ -1,5 +1,6 @@
 """Shell completions install command."""
 
+import shutil
 import subprocess
 import sys
 from enum import StrEnum
@@ -34,8 +35,9 @@ def _generate_completion_script(shell: Shell) -> str:
         Shell.zsh: "complete_zsh",
         Shell.fish: "complete_fish",
     }
+    mycli = shutil.which("mycli") or sys.argv[0]
     result = subprocess.run(
-        [sys.executable, "-m", "cli"],
+        [mycli],
         capture_output=True,
         text=True,
         env={**__import__("os").environ, env_var: source_map[shell]},

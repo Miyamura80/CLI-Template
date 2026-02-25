@@ -52,6 +52,7 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src", "common", "utils", "commands"]
+force-include = {"cli.py" = "cli.py"}
 
 [tool.ruff]
 line-length = 88
