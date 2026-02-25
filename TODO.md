@@ -1,23 +1,16 @@
 # TODO
 
-## Integrations
+## Telemetry Integration
 
-- [ ] Integrate [Strix](https://github.com/usestrix/strix) - **Requires human supervision**
-- [ ] Re-init Postgres API key due to potential leak
+`record_event()` and `show_first_run_notice()` in `src/cli/telemetry.py` are implemented but never called.
 
-## Code Quality
+- [ ] Call `show_first_run_notice()` in the `main()` callback in `cli.py` so the opt-out notice displays on first use
+- [ ] Wrap `app()` in `main_cli()` to time command execution and call `record_event()` with the command name, duration, and success/failure
+- [ ] Set a telemetry endpoint in `common/global_config.yaml` (`telemetry.endpoint`) and wire `record_event()` to POST events there when the endpoint is configured
+- [ ] Add tests for telemetry integration (notice shown once, events recorded, opt-out respected)
 
+## PyPI Packaging & Publishing
 
-
-### Medium Priority
-
-- [ ] Type ignore comments in `utils/llm/dspy_langfuse.py` - indicates type system gaps
-- [ ] Limited test coverage for `init/`, `utils/llm/` directories
-- [ ] Feature flag not checked in all fallback paths
-
-
-
-### `saas` branch only 
-
-- [ ] Add loops.so for user tracking
-- [ ] Add posthog for product analytics
+- [ ] Run through full PyPI packaging: verify `pyproject.toml` metadata (description, classifiers, URLs, license), build with `uv build`, and test install from the wheel
+- [ ] Do a test publish to TestPyPI (`uv publish --publish-url https://test.pypi.org/legacy/`) and verify `pip install --index-url https://test.pypi.org/simple/ cli-template` works end-to-end
+- [ ] Publish to PyPI and confirm `pip install cli-template` installs correctly with the `mycli` entry point working

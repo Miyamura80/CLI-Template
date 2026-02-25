@@ -16,11 +16,13 @@ from pydantic_settings import (
 
 # Import configuration models
 from .config_models import (
+    CliConfig,
     DefaultLlm,
     ExampleParent,
     FeaturesConfig,
     LlmConfig,
     LoggingConfig,
+    TelemetryConfig,
 )
 
 # Get the path to the root directory (one level up from common)
@@ -175,6 +177,8 @@ class Config(BaseSettings):
     llm_config: LlmConfig
     logging: LoggingConfig
     features: FeaturesConfig = Field(default_factory=lambda: FeaturesConfig())
+    telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig())
+    cli: CliConfig = Field(default_factory=lambda: CliConfig())
 
     # Environment variables
     DEV_ENV: str

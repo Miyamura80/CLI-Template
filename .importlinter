@@ -5,6 +5,7 @@ root_packages =
     src
     tests
     init
+    commands
 
 [importlinter:contract:common_no_upper_layers]
 name = Common does not import higher layers
@@ -35,6 +36,15 @@ forbidden_modules =
     tests
     init
 
+[importlinter:contract:commands_allowed_imports]
+name = Commands do not import tests or init
+type = forbidden
+source_modules =
+    commands
+forbidden_modules =
+    tests
+    init
+
 [importlinter:contract:no_imports_from_tests]
 name = Tests are not imported by app code
 type = forbidden
@@ -43,6 +53,7 @@ source_modules =
     utils
     src
     init
+    commands
 forbidden_modules =
     tests
 
