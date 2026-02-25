@@ -42,8 +42,25 @@ def _validate_kebab_case(value: str) -> bool | str:
     return True
 
 
+def _validate_cli_name(value: str) -> bool | str:
+    """Validate that the value is a valid CLI command name."""
+    if not value:
+        return "CLI name cannot be empty."
+    if not re.match(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$", value):
+        return "Must be lowercase with optional hyphens (e.g. my-tool). No spaces or underscores."
+    return True
+
+
+def _read_cli_name() -> str:
+    """Read the current CLI entry-point name from pyproject.toml [project.scripts]."""
+    text = (PROJECT_ROOT / "pyproject.toml").read_text()
+    match = re.search(r"^\[project\.scripts\]\s*\n(\S+)\s*=", text, re.MULTILINE)
+    return match.group(1) if match else "mycli"
+
+
 STEPS: list[tuple[str, str]] = [
     ("Rename", "rename"),
+    ("CLI Name", "cli_name"),
     ("Dependencies", "deps"),
     ("Environment Variables", "env"),
     ("Pre-commit Hooks", "hooks"),
@@ -62,11 +79,12 @@ def _run_orchestrator() -> None:
             f"[bold]{project_name}[/bold]\n\n"
             "This wizard will guide you through:\n"
             "  1. Rename - Set project name and description\n"
-            "  2. Dependencies - Install project dependencies\n"
-            "  3. Environment - Configure API keys and secrets\n"
-            "  4. Hooks - Activate pre-commit hooks\n"
-            "  5. Media - Generate banner and logo assets\n"
-            "  6. Jules - Enable/disable automated maintenance workflows",
+            "  2. CLI Name - Choose the CLI command name\n"
+            "  3. Dependencies - Install project dependencies\n"
+            "  4. Environment - Configure API keys and secrets\n"
+            "  5. Hooks - Activate pre-commit hooks\n"
+            "  6. Media - Generate banner and logo assets\n"
+            "  7. Jules - Enable/disable automated maintenance workflows",
             title="Welcome to Project Onboarding",
             border_style="blue",
         )
@@ -188,9 +206,133 @@ def rename() -> None:
     rprint(Panel("\n".join(changes), title="✅ Rename Complete", border_style="green"))
 
 
+def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
+    """Replace all occurrences of the old CLI name with the new one across the codebase.
+
+    Returns a list of human-readable change descriptions.
+    """
+    old_upper = old_name.upper().replace("-", "_")
+    new_upper = new_name.upper().replace("-", "_")
+
+    # Map of (file_path, [(old, new), ...])
+    replacements: list[tuple[Path, list[tuple[str, str]]]] = [
+        (
+            PROJECT_ROOT / "pyproject.toml",
+            [(f'{old_name} = "cli:main_cli"', f'{new_name} = "cli:main_cli"')],
+        ),
+        (
+            PROJECT_ROOT / "cli.py",
+            [
+                (f'name="{old_name}"', f'name="{new_name}"'),
+                (f"{old_name} {{version}}", f"{new_name} {{version}}"),
+            ],
+        ),
+        (
+            PROJECT_ROOT / "src" / "cli" / "completions.py",
+            [
+                (f'"_{old_upper}_COMPLETE"', f'"_{new_upper}_COMPLETE"'),
+                (f'which("{old_name}")', f'which("{new_name}")'),
+                (f"completions for {old_name}.", f"completions for {new_name}."),
+                (
+                    f"[bold]{old_name} --install-completion[/bold]",
+                    f"[bold]{new_name} --install-completion[/bold]",
+                ),
+                (
+                    f"[bold]{old_name} --show-completion[/bold]",
+                    f"[bold]{new_name} --show-completion[/bold]",
+                ),
+                (f"# {old_name} completions", f"# {new_name} completions"),
+            ],
+        ),
+        (
+            PROJECT_ROOT / "src" / "cli" / "telemetry.py",
+            [(f"'{old_name} telemetry disable'", f"'{new_name} telemetry disable'")],
+        ),
+        (
+            PROJECT_ROOT / "src" / "cli" / "scaffold.py",
+            [(f"[bold]{old_name} ", f"[bold]{new_name} ")],
+        ),
+        (
+            PROJECT_ROOT / "tests" / "cli" / "test_cli.py",
+            [(f'"{old_name}"', f'"{new_name}"')],
+        ),
+    ]
+
+    # Files where we use regex word-boundary replacement instead of literal
+    regex_replacements: list[tuple[Path, str, str]] = [
+        (PROJECT_ROOT / "README.md", rf"\b{re.escape(old_name)}\b", new_name),
+    ]
+
+    changes: list[str] = []
+    for file_path, pairs in replacements:
+        if not file_path.exists():
+            continue
+        text = file_path.read_text()
+        file_changed = False
+        for old, new in pairs:
+            if old in text:
+                text = text.replace(old, new)
+                file_changed = True
+        if file_changed:
+            file_path.write_text(text)
+            rel = file_path.relative_to(PROJECT_ROOT)
+            changes.append(f"[green]{rel}[/green]")
+
+    for file_path, pattern, repl in regex_replacements:
+        if not file_path.exists():
+            continue
+        text = file_path.read_text()
+        new_text = re.sub(pattern, repl, text)
+        if new_text != text:
+            file_path.write_text(new_text)
+            rel = file_path.relative_to(PROJECT_ROOT)
+            if f"[green]{rel}[/green]" not in changes:
+                changes.append(f"[green]{rel}[/green]")
+
+    return changes
+
+
+@app.command()
+def cli_name() -> None:
+    """Step 2: Choose the CLI command name (renames all 'mycli' references)."""
+    current = _read_cli_name()
+    if current != "mycli":
+        rprint(
+            f"[blue]ℹ CLI already renamed to '{current}'. Skipping CLI name step.[/blue]"
+        )
+        return
+
+    name = questionary.text(
+        "CLI command name (e.g. my-tool):",
+        default="mycli",
+        validate=_validate_cli_name,
+    ).ask()
+    if name is None:
+        raise typer.Abort()
+
+    if name == "mycli":
+        rprint("[yellow]Keeping default name 'mycli'.[/yellow]")
+        return
+
+    changed_files = _replace_cli_name("mycli", name)
+
+    if not changed_files:
+        rprint("[yellow]No files needed updating.[/yellow]")
+        return
+
+    rprint(
+        Panel(
+            f"Renamed CLI from [red]mycli[/red] → [green]{name}[/green]\n\n"
+            "Updated files:\n" + "\n".join(f"  {f}" for f in changed_files),
+            title="✅ CLI Name Complete",
+            border_style="green",
+        )
+    )
+
+
 @app.command()
 def deps() -> None:
-    """Step 2: Install project dependencies."""
+    """Step 3: Install project dependencies."""
     if not shutil.which("uv"):
         rprint(
             "[red]✗ uv is not installed.[/red]\n"
@@ -372,7 +514,7 @@ def _write_env_file(entries: list[dict[str, str]], values: dict[str, str]) -> in
 
 @app.command()
 def env() -> None:
-    """Step 3: Configure environment variables."""
+    """Step 4: Configure environment variables."""
     entries = _parse_env_example()
     if not entries:
         rprint("[red]✗ No .env.example found.[/red]")
@@ -431,7 +573,7 @@ def _ensure_prek() -> None:
 
 @app.command()
 def hooks() -> None:
-    """Step 4: Activate pre-commit hooks."""
+    """Step 5: Activate pre-commit hooks."""
     config_path = PROJECT_ROOT / "prek.toml"
     if not config_path.exists():
         rprint("[red]✗ prek.toml not found.[/red]")
@@ -527,7 +669,7 @@ def _run_media_generation(choice: str, project_name: str, theme: str) -> list[st
 
 @app.command()
 def media() -> None:
-    """Step 5: Generate banner and logo assets."""
+    """Step 6: Generate banner and logo assets."""
     if not _check_gemini_key():
         rprint("[yellow]⚠ GEMINI_API_KEY is not configured.[/yellow]")
         skip = questionary.confirm("Skip media generation?", default=True).ask()
@@ -603,7 +745,7 @@ def _disable_workflow(filename: str) -> None:
 
 @app.command()
 def jules() -> None:
-    """Step 6: Enable or disable automated Jules maintenance workflows."""
+    """Step 7: Enable or disable automated Jules maintenance workflows."""
     if not _WORKFLOWS_DIR.is_dir():
         rprint("[red]✗ .github/workflows/ directory not found.[/red]")
         raise typer.Exit(code=1)
@@ -669,6 +811,7 @@ def jules() -> None:
 STEP_FUNCTIONS.update(
     {
         "rename": rename,
+        "cli_name": cli_name,
         "deps": deps,
         "env": env,
         "hooks": hooks,
