@@ -1,5 +1,6 @@
 """Tests for the scaffold command."""
 
+import os
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -14,14 +15,16 @@ _register_user_commands()
 
 _COMMANDS_DIR = Path(__file__).parent.parent.parent / "commands"
 
+# Use PID in file names so parallel xdist workers don't collide.
+_SUFFIX = os.getpid()
+
 
 class TestScaffold(TestTemplate):
     def test_init_creates_file(self):
-        target = _COMMANDS_DIR / "test_scaffold_cmd.py"
+        name = f"test_scaffold_{_SUFFIX}"
+        target = _COMMANDS_DIR / f"{name}.py"
         try:
-            result = runner.invoke(
-                app, ["init", "test_scaffold_cmd", "--desc", "A test command"]
-            )
+            result = runner.invoke(app, ["init", name, "--desc", "A test command"])
             assert result.exit_code == 0
             assert target.exists()
             content = target.read_text()
@@ -35,10 +38,11 @@ class TestScaffold(TestTemplate):
         assert result.exit_code == 1
 
     def test_init_rejects_duplicate(self):
-        target = _COMMANDS_DIR / "test_dup_cmd.py"
+        name = f"test_dup_{_SUFFIX}"
+        target = _COMMANDS_DIR / f"{name}.py"
         try:
             target.write_text("# existing command\n")
-            result = runner.invoke(app, ["init", "test_dup_cmd"])
+            result = runner.invoke(app, ["init", name])
             assert result.exit_code == 1
         finally:
             if target.exists():
