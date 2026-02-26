@@ -117,6 +117,7 @@ def _register_builtin_commands() -> None:
 
     from src.cli.completions import app as completions_app
     from src.cli.scaffold import init_command
+    from src.cli.security import security_command
     from src.cli.telemetry import app as telemetry_app
     from src.cli.update import update_command
 
@@ -124,6 +125,7 @@ def _register_builtin_commands() -> None:
     app.add_typer(telemetry_app, name="telemetry", help="Manage anonymous telemetry.")
     app.command(name="update")(update_command)
     app.command(name="init")(init_command)
+    app.command(name="security")(security_command)
 
 
 def _register_user_commands() -> None:
@@ -142,6 +144,11 @@ def main_cli() -> None:
     """Entry point called by the console script."""
     _register_builtin_commands()
     _register_user_commands()
+
+    # One-time security notice on first run
+    from src.cli.security import show_first_install_notice
+
+    show_first_install_notice()
 
     version = importlib.metadata.version("miyamura80-cli-template")
     emoji, primary = _load_cli_branding()
