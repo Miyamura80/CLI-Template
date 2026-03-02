@@ -17,7 +17,11 @@ from tests.test_template import TestTemplate
 
 class TestVerbosity(TestTemplate):
     def test_default_is_normal(self):
-        assert verbosity.get() == Verbosity.NORMAL
+        token = verbosity.set(Verbosity.NORMAL)
+        try:
+            assert verbosity.get() == Verbosity.NORMAL
+        finally:
+            verbosity.reset(token)
 
     def test_is_verbose_when_verbose(self):
         token = verbosity.set(Verbosity.VERBOSE)
@@ -47,12 +51,20 @@ class TestVerbosity(TestTemplate):
 
 class TestOutputFormat(TestTemplate):
     def test_default_is_table(self):
-        assert output_format.get() == OutputFormat.TABLE
+        token = output_format.set(OutputFormat.TABLE)
+        try:
+            assert output_format.get() == OutputFormat.TABLE
+        finally:
+            output_format.reset(token)
 
 
 class TestDryRun(TestTemplate):
     def test_default_is_false(self):
-        assert not is_dry_run()
+        token = dry_run.set(False)
+        try:
+            assert not is_dry_run()
+        finally:
+            dry_run.reset(token)
 
     def test_dry_run_guard_skips_when_active(self):
         token = dry_run.set(True)
