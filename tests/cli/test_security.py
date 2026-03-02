@@ -122,8 +122,8 @@ class TestFirstInstallNotice(TestTemplate):
         state_file.write_text("{}")
 
         with (
-            patch("src.cli.security._STATE_FILE", state_file),
-            patch("src.cli.security._CONFIG_DIR", tmp_path),
+            patch("src.cli.state_store._STATE_FILE", state_file),
+            patch("src.cli.state_store._CONFIG_DIR", tmp_path),
         ):
             show_first_install_notice()
             state = json.loads(state_file.read_text())
@@ -137,8 +137,8 @@ class TestFirstInstallNotice(TestTemplate):
         state_file.write_text(json.dumps({"security_notice_shown": True}))
 
         with (
-            patch("src.cli.security._STATE_FILE", state_file),
-            patch("src.cli.security._CONFIG_DIR", tmp_path),
+            patch("src.cli.state_store._STATE_FILE", state_file),
+            patch("src.cli.state_store._CONFIG_DIR", tmp_path),
             patch("src.cli.security.console") as mock_console,
         ):
             show_first_install_notice()

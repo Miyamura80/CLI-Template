@@ -103,6 +103,12 @@ def main(
     # Install error handler
     install_error_handler(debug=debug)
 
+    # One-time security notice on first run (after flags are parsed)
+    if not quiet:
+        from src.cli.security import show_first_install_notice
+
+        show_first_install_notice()
+
 
 _builtins_registered = False
 _user_commands_registered = False
@@ -144,11 +150,6 @@ def main_cli() -> None:
     """Entry point called by the console script."""
     _register_builtin_commands()
     _register_user_commands()
-
-    # One-time security notice on first run
-    from src.cli.security import show_first_install_notice
-
-    show_first_install_notice()
 
     version = importlib.metadata.version("miyamura80-cli-template")
     emoji, primary = _load_cli_branding()

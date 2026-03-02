@@ -1,20 +1,16 @@
 """Security ratings from Snyk and Socket.dev for package trust verification."""
 
 import importlib.metadata
-import json
 import urllib.request
-from pathlib import Path
-from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from src.cli.state_store import load_state, save_state
+
 _PACKAGE_NAME = "miyamura80-cli-template"
 _TIMEOUT = 5
-
-_CONFIG_DIR = Path.home() / ".config" / _PACKAGE_NAME
-_STATE_FILE = _CONFIG_DIR / "state.json"
 
 # Public assessment page URLs
 _SNYK_ADVISOR_URL = "https://snyk.io/advisor/python/{package}"
@@ -22,17 +18,6 @@ _SNYK_SECURITY_URL = "https://security.snyk.io/package/pip/{package}"
 _SOCKET_URL = "https://socket.dev/pypi/package/{package}"
 
 console = Console(stderr=True)
-
-
-def _load_state() -> dict[str, Any]:
-    if _STATE_FILE.exists():
-        return json.loads(_STATE_FILE.read_text())
-    return {}
-
-
-def _save_state(state: dict[str, Any]) -> None:
-    _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    _STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
 def get_snyk_advisor_url(package: str | None = None) -> str:
@@ -136,7 +121,7 @@ def display_security_panel(package: str | None = None) -> None:
 
     panel = Panel(
         table,
-        title=f"[bold]Security Ratings — {pkg} v{version}[/bold]",
+        title=f"[bold]Security Ratings - {pkg} v{version}[/bold]",
         subtitle="[dim]Verify this package on independent security platforms[/dim]",
         border_style="green",
         padding=(1, 2),
@@ -146,7 +131,7 @@ def display_security_panel(package: str | None = None) -> None:
 
 def show_first_install_notice() -> None:
     """Print a one-time security notice on first run after install."""
-    state = _load_state()
+    state = load_state()
     if state.get("security_notice_shown"):
         return
 
@@ -159,7 +144,7 @@ def show_first_install_notice() -> None:
     )
 
     state["security_notice_shown"] = True
-    _save_state(state)
+    save_state(state)
 
 
 def security_command() -> None:
