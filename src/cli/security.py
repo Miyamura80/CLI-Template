@@ -1,6 +1,7 @@
 """Security ratings from Snyk and Socket.dev for package trust verification."""
 
 import importlib.metadata
+import re
 import urllib.request
 
 from rich.console import Console
@@ -11,6 +12,7 @@ from src.cli.state_store import load_state, save_state
 
 _PACKAGE_NAME = "miyamura80-cli-template"
 _TIMEOUT = 5
+_VALID_PACKAGE_RE = re.compile(r"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
 
 # Public assessment page URLs
 _SNYK_ADVISOR_URL = "https://snyk.io/advisor/python/{package}"
@@ -20,25 +22,39 @@ _SOCKET_URL = "https://socket.dev/pypi/package/{package}"
 console = Console(stderr=True)
 
 
+def _validate_package_name(package: str) -> str:
+    """Validate that a package name contains only safe characters for URLs."""
+    if not _VALID_PACKAGE_RE.match(package):
+        raise ValueError(f"Invalid package name: {package}")
+    return package
+
+
 def get_snyk_advisor_url(package: str | None = None) -> str:
     """Build Snyk Advisor URL for the package."""
-    return _SNYK_ADVISOR_URL.format(package=package or _PACKAGE_NAME)
+    return _SNYK_ADVISOR_URL.format(
+        package=_validate_package_name(package or _PACKAGE_NAME)
+    )
 
 
 def get_snyk_security_url(package: str | None = None) -> str:
     """Build Snyk Security DB URL for the package."""
-    return _SNYK_SECURITY_URL.format(package=package or _PACKAGE_NAME)
+    return _SNYK_SECURITY_URL.format(
+        package=_validate_package_name(package or _PACKAGE_NAME)
+    )
 
 
 def get_socket_url(package: str | None = None) -> str:
     """Build Socket.dev URL for the package."""
-    return _SOCKET_URL.format(package=package or _PACKAGE_NAME)
+    return _SOCKET_URL.format(
+        package=_validate_package_name(package or _PACKAGE_NAME)
+    )
 
 
 def _fetch_snyk_score(package: str) -> float | None:
-    """Try to fetch the Snyk Advisor health score (0.0–1.0)."""
+    """Try to fetch the Snyk Advisor health score (0.0-1.0)."""
     try:
-        url = f"https://snyk.io/advisor/python/{package}/badge.svg"
+        safe_pkg = _validate_package_name(package)
+        url = f"https://snyk.io/advisor/python/{safe_pkg}/badge.svg"
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
             svg = resp.read().decode()
