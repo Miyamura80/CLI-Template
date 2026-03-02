@@ -21,5 +21,8 @@ def load_state() -> dict[str, Any]:
 
 def save_state(state: dict[str, Any]) -> None:
     """Write the state dict to disk."""
-    _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    _STATE_FILE.write_text(json.dumps(state, indent=2))
+    try:
+        _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        _STATE_FILE.write_text(json.dumps(state, indent=2))
+    except OSError:
+        pass

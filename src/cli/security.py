@@ -84,7 +84,10 @@ def _score_label(score: float) -> str:
 def display_security_panel(package: str | None = None) -> None:
     """Display a rich panel with security ratings and links."""
     pkg = package or _PACKAGE_NAME
-    version = importlib.metadata.version(pkg)
+    try:
+        version = importlib.metadata.version(pkg)
+    except importlib.metadata.PackageNotFoundError:
+        version = "unknown"
 
     snyk_advisor = get_snyk_advisor_url(pkg)
     snyk_security = get_snyk_security_url(pkg)
