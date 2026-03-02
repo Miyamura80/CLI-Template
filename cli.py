@@ -86,13 +86,15 @@ def main(
     ] = None,
 ) -> None:
     """Process global flags before any subcommand."""
-    # Set verbosity
+    # Set verbosity (always reset so contextvars don't leak between invocations)
     if debug:
         verbosity.set(Verbosity.DEBUG)
     elif quiet:
         verbosity.set(Verbosity.QUIET)
     elif verbose:
         verbosity.set(Verbosity.VERBOSE)
+    else:
+        verbosity.set(Verbosity.NORMAL)
 
     # Set output format
     output_format.set(_FORMAT_MAP[fmt])
