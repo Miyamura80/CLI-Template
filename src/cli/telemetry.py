@@ -7,18 +7,16 @@ import os
 import platform
 import socket
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
 
 import typer
 from rich.console import Console
 
+from src.cli.state_store import _CONFIG_DIR, load_state, save_state
+
 app = typer.Typer(no_args_is_help=True)
 console = Console(stderr=True)
 
-_CONFIG_DIR = Path.home() / ".config" / "miyamura80-cli-template"
 _TELEMETRY_FILE = _CONFIG_DIR / "telemetry.json"
-_STATE_FILE = _CONFIG_DIR / "state.json"
 _MAX_EVENTS = 1000
 
 
@@ -28,28 +26,17 @@ def _machine_id() -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
-def _load_state() -> dict[str, Any]:
-    if _STATE_FILE.exists():
-        return json.loads(_STATE_FILE.read_text())
-    return {}
-
-
-def _save_state(state: dict[str, Any]) -> None:
-    _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    _STATE_FILE.write_text(json.dumps(state, indent=2))
-
-
 def is_enabled() -> bool:
     """Check if telemetry is enabled."""
     if os.environ.get("CLI_TELEMETRY_DISABLED", "").strip() in ("1", "true", "yes"):
         return False
-    state = _load_state()
+    state = load_state()
     return state.get("telemetry_enabled", True)
 
 
 def show_first_run_notice() -> None:
     """Print a one-time telemetry notice."""
-    state = _load_state()
+    state = load_state()
     if state.get("telemetry_notice_shown"):
         return
     console.print(
@@ -57,7 +44,7 @@ def show_first_run_notice() -> None:
         "Run 'mycli telemetry disable' or set CLI_TELEMETRY_DISABLED=1 to opt out.[/dim]"
     )
     state["telemetry_notice_shown"] = True
-    _save_state(state)
+    save_state(state)
 
 
 def record_event(command: str, duration: float, success: bool) -> None:
@@ -110,16 +97,16 @@ def status() -> None:
 @app.command()
 def enable() -> None:
     """Enable anonymous telemetry."""
-    state = _load_state()
+    state = load_state()
     state["telemetry_enabled"] = True
-    _save_state(state)
+    save_state(state)
     console.print("[green]Telemetry enabled.[/green]")
 
 
 @app.command()
 def disable() -> None:
     """Disable anonymous telemetry."""
-    state = _load_state()
+    state = load_state()
     state["telemetry_enabled"] = False
-    _save_state(state)
+    save_state(state)
     console.print("[yellow]Telemetry disabled.[/yellow]")

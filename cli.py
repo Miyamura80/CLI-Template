@@ -86,13 +86,15 @@ def main(
     ] = None,
 ) -> None:
     """Process global flags before any subcommand."""
-    # Set verbosity
+    # Set verbosity (always reset so contextvars don't leak between invocations)
     if debug:
         verbosity.set(Verbosity.DEBUG)
     elif quiet:
         verbosity.set(Verbosity.QUIET)
     elif verbose:
         verbosity.set(Verbosity.VERBOSE)
+    else:
+        verbosity.set(Verbosity.NORMAL)
 
     # Set output format
     output_format.set(_FORMAT_MAP[fmt])
@@ -102,6 +104,12 @@ def main(
 
     # Install error handler
     install_error_handler(debug=debug)
+
+    # One-time security notice on first run (after flags are parsed)
+    if not quiet:
+        from src.cli.security import show_first_install_notice
+
+        show_first_install_notice()
 
 
 _builtins_registered = False
@@ -117,6 +125,7 @@ def _register_builtin_commands() -> None:
 
     from src.cli.completions import app as completions_app
     from src.cli.scaffold import init_command
+    from src.cli.security import security_command
     from src.cli.telemetry import app as telemetry_app
     from src.cli.update import update_command
 
@@ -124,6 +133,7 @@ def _register_builtin_commands() -> None:
     app.add_typer(telemetry_app, name="telemetry", help="Manage anonymous telemetry.")
     app.command(name="update")(update_command)
     app.command(name="init")(init_command)
+    app.command(name="security")(security_command)
 
 
 def _register_user_commands() -> None:
