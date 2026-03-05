@@ -140,6 +140,16 @@ class DSPYInference:
         self,
         **kwargs: Any,
     ) -> Any:
+        from src.cli.state import is_dry_run
+
+        if is_dry_run():
+            log.info(
+                "[DRY RUN] Would call LLM API: model={}, inputs={}",
+                self.lm.model,
+                kwargs,
+            )
+            return None
+
         if self._use_langfuse_observe:
             from langfuse import observe as langfuse_observe
 

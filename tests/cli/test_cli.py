@@ -70,3 +70,9 @@ class TestCLI(TestTemplate):
     def test_completions_show(self):
         result = runner.invoke(app, ["completions", "show", "bash"])
         assert result.exit_code == 0
+
+    def test_update_dry_run(self):
+        result = runner.invoke(app, ["--dry-run", "update"])
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+        assert "pypi.org" in result.output.lower() or "uv pip install" in result.output
