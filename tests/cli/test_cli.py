@@ -75,4 +75,4 @@ class TestCLI(TestTemplate):
         result = runner.invoke(app, ["--dry-run", "update"])
         assert result.exit_code == 0
         assert "DRY RUN" in result.output
-        assert "pypi.org" in result.output.lower() or "uv pip install" in result.output
+        assert "pypi.org" in result.output.lower() and "uv pip install" in result.output
