@@ -82,8 +82,16 @@ Global flags go **before** the subcommand:
 ```bash
 uv run mycli --format json config show     # JSON output
 uv run mycli --dry-run greet Bob           # preview without executing
+uv run mycli --dry-run update              # preview PyPI check + install without running it
 uv run mycli --verbose greet Alice         # detailed output
 ```
+
+`--dry-run` short-circuits any operation that would mutate state or make a network request. For built-in commands:
+
+| Command | What is previewed |
+|---|---|
+| `update` | PyPI version-check URL and the `uv pip install` command |
+| LLM inference | Model name and input fields sent to the API |
 
 ## Adding Commands
 

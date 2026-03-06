@@ -9,6 +9,8 @@ import typer
 from packaging.version import Version
 from rich.console import Console
 
+from src.cli.state import is_dry_run
+
 console = Console(stderr=True)
 
 _PACKAGE_NAME = "miyamura80-cli-template"
@@ -18,6 +20,16 @@ _TIMEOUT = 5
 
 def update_command() -> None:
     """Check for updates and upgrade if a newer version is available."""
+    if is_dry_run():
+        console.print(
+            f"[yellow][DRY RUN][/yellow] Would GET {_PYPI_URL} to check for updates"
+        )
+        console.print(
+            f"[yellow][DRY RUN][/yellow] Would run: uv pip install --upgrade {_PACKAGE_NAME}"
+            " (only if a newer version is found)"
+        )
+        return
+
     current = importlib.metadata.version(_PACKAGE_NAME)
     console.print(f"Current version: [bold]{current}[/bold]")
 

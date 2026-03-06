@@ -13,7 +13,19 @@ from tenacity import (
 )
 
 from common import global_config
+from common.dry_run import is_dry_run
 from common.flags import client
+
+
+class _DryRunResult:
+    """Sentinel returned by DSPYInference.run() when --dry-run is active.
+
+    Accessing any attribute returns the string "[dry-run]" so callers that
+    dereference the result (e.g. result.banner_description) do not crash.
+    """
+
+    def __getattr__(self, name: str) -> str:
+        return "[dry-run]"
 
 
 def _langfuse_configured() -> bool:
@@ -140,6 +152,14 @@ class DSPYInference:
         self,
         **kwargs: Any,
     ) -> Any:
+        if is_dry_run():
+            log.info(
+                "[DRY RUN] Would call LLM API: model={}, inputs={}",
+                self.lm.model,
+                kwargs,
+            )
+            return _DryRunResult()
+
         if self._use_langfuse_observe:
             from langfuse import observe as langfuse_observe
 

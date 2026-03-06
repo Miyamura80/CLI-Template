@@ -7,6 +7,9 @@ from typing import Any
 
 from rich.console import Console
 
+from common.dry_run import dry_run as dry_run
+from common.dry_run import is_dry_run as is_dry_run
+
 console = Console(stderr=True)
 
 
@@ -27,7 +30,6 @@ verbosity: ContextVar[Verbosity] = ContextVar("verbosity", default=Verbosity.NOR
 output_format: ContextVar[OutputFormat] = ContextVar(
     "output_format", default=OutputFormat.TABLE
 )
-dry_run: ContextVar[bool] = ContextVar("dry_run", default=False)
 
 
 def is_verbose() -> bool:
@@ -40,10 +42,6 @@ def is_quiet() -> bool:
 
 def is_debug() -> bool:
     return verbosity.get() == Verbosity.DEBUG
-
-
-def is_dry_run() -> bool:
-    return dry_run.get()
 
 
 def dry_run_guard(description: str):
