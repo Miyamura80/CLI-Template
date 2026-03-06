@@ -20,9 +20,6 @@ _TIMEOUT = 5
 
 def update_command() -> None:
     """Check for updates and upgrade if a newer version is available."""
-    current = importlib.metadata.version(_PACKAGE_NAME)
-    console.print(f"Current version: [bold]{current}[/bold]")
-
     if is_dry_run():
         console.print(
             f"[yellow][DRY RUN][/yellow] Would GET {_PYPI_URL} to check for updates"
@@ -32,6 +29,9 @@ def update_command() -> None:
             " (only if a newer version is found)"
         )
         return
+
+    current = importlib.metadata.version(_PACKAGE_NAME)
+    console.print(f"Current version: [bold]{current}[/bold]")
 
     try:
         req = urllib.request.Request(_PYPI_URL, headers={"Accept": "application/json"})

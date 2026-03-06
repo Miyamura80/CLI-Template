@@ -75,5 +75,5 @@ class TestCLI(TestTemplate):
         result = runner.invoke(app, ["--dry-run", "update"])
         assert result.exit_code == 0
         assert "DRY RUN" in result.output
-        assert "https://pypi.org" in result.output
-        assert "uv pip install" in result.output
+        assert "https://pypi.org/pypi/miyamura80-cli-template/json" in result.output
+        assert "uv pip install --upgrade miyamura80-cli-template" in result.output
