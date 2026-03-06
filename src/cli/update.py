@@ -32,7 +32,6 @@ def update_command() -> None:
             " (only if a newer version is found)"
         )
         return
-        return
 
     try:
         req = urllib.request.Request(_PYPI_URL, headers={"Accept": "application/json"})
