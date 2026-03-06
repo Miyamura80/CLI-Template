@@ -29,7 +29,9 @@ def update_command() -> None:
         )
         console.print(
             f"[yellow][DRY RUN][/yellow] Would run: uv pip install --upgrade {_PACKAGE_NAME}"
+            " (only if a newer version is found)"
         )
+        return
         return
 
     try:
