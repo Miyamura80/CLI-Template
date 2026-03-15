@@ -348,9 +348,10 @@ def rename() -> None:
     if name is None:
         raise typer.Abort()
 
+    current_desc = _read_pyproject_description()
     description = questionary.text(
         "Project description:",
-        default=_read_pyproject_description(),
+        default=current_desc,
     ).ask()
     if description is None:
         raise typer.Abort()
@@ -361,7 +362,6 @@ def rename() -> None:
         f'name = "{current_name}"', f'name = "{name}"'
     )
     if description:
-        current_desc = _read_pyproject_description()
         old_desc = current_desc if current_desc else "Add your description here"
         pyproject_text = pyproject_text.replace(
             f'description = "{old_desc}"',
@@ -372,12 +372,12 @@ def rename() -> None:
     readme_path = PROJECT_ROOT / "README.md"
     readme_text = readme_path.read_text()
     readme_text = re.sub(
-        r"^#\s+.*$", f"# {name}", readme_text, count=1, flags=re.MULTILINE
+        r"^#\s+.*$", lambda _: f"# {name}", readme_text, count=1, flags=re.MULTILINE
     )
     if description:
         readme_text = re.sub(
             r"<b>.*?</b>",
-            f"<b>{description}</b>",
+            lambda _: f"<b>{description}</b>",
             readme_text,
             count=1,
         )
