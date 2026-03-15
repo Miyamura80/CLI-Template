@@ -115,28 +115,39 @@ def _run_orchestrator() -> None:
     )
 
     total = len(STEPS)
-    completed: list[str] = []
-    skipped: list[str] = []
+    results: dict[str, str] = {}  # label -> "completed" | "skipped" | "skipped (failed)"
 
-    for i, (label, cmd_name) in enumerate(STEPS, 1):
-        rprint(f"\n[bold cyan]--- Step {i}/{total}: {label} ---[/bold cyan]")
+    idx = 0
+    while idx < total:
+        label, cmd_name = STEPS[idx]
+        rprint(f"\n[bold cyan]--- Step {idx + 1}/{total}: {label} ---[/bold cyan]")
+
+        choices = ["Yes", "Skip"]
+        if idx > 0:
+            choices.append("← Go back")
+
         answer = questionary.select(
             "Run this step?",
-            choices=["Yes", "Skip"],
+            choices=choices,
             default="Yes",
         ).ask()
         if answer is None:
             raise typer.Abort()
 
+        if answer == "← Go back":
+            idx -= 1
+            continue
+
         if answer == "Skip":
-            skipped.append(label)
+            results[label] = "skipped"
             rprint(f"[yellow]- {label} skipped[/yellow]")
+            idx += 1
             continue
 
         try:
             step_fn = STEP_FUNCTIONS[cmd_name]
             step_fn()  # type: ignore[operator]
-            completed.append(label)
+            results[label] = "completed"
         except (typer.Exit, SystemExit) as exc:
             code = getattr(exc, "code", getattr(exc, "exit_code", 1))
             if code != 0:
@@ -146,10 +157,18 @@ def _run_orchestrator() -> None:
                 ).ask()
                 if cont is None or not cont:
                     raise typer.Abort() from None
-                skipped.append(f"{label} (failed)")
+                results[label] = "skipped (failed)"
             else:
-                completed.append(label)
+                results[label] = "completed"
 
+        idx += 1
+
+    completed = [name for name, status in results.items() if status == "completed"]
+    skipped = [
+        f"{name} (failed)" if status == "skipped (failed)" else name
+        for name, status in results.items()
+        if status != "completed"
+    ]
     _print_summary(completed, skipped)
 
 
