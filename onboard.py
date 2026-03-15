@@ -321,47 +321,65 @@ def branding() -> None:
     )
 
 
+def _read_pyproject_description() -> str:
+    """Read the current project description from pyproject.toml."""
+    text = (PROJECT_ROOT / "pyproject.toml").read_text()
+    match = re.search(r'^description\s*=\s*"([^"]*)"', text, re.MULTILINE)
+    return match.group(1) if match else ""
+
+
 @app.command()
 def rename() -> None:
     """Step 2: Rename the project and update metadata."""
     current_name = _read_pyproject_name()
     if current_name != "python-template":
-        rprint(
-            f"[blue]ℹ Project already renamed to '{current_name}'. Skipping rename step.[/blue]"
-        )
-        return
+        rprint(f"[blue]ℹ Project currently named '{current_name}'.[/blue]")
+        re_rename = questionary.confirm("Re-rename the project?", default=False).ask()
+        if re_rename is None:
+            raise typer.Abort()
+        if not re_rename:
+            return
 
     name = questionary.text(
         "Project name (kebab-case):",
+        default=current_name if current_name != "python-template" else "",
         validate=_validate_kebab_case,
     ).ask()
     if name is None:
         raise typer.Abort()
 
-    description = questionary.text("Project description:").ask()
+    description = questionary.text(
+        "Project description:",
+        default=_read_pyproject_description(),
+    ).ask()
     if description is None:
         raise typer.Abort()
 
     pyproject_path = PROJECT_ROOT / "pyproject.toml"
     pyproject_text = pyproject_path.read_text()
     pyproject_text = pyproject_text.replace(
-        'name = "python-template"', f'name = "{name}"'
+        f'name = "{current_name}"', f'name = "{name}"'
     )
     if description:
+        current_desc = _read_pyproject_description()
+        old_desc = current_desc if current_desc else "Add your description here"
         pyproject_text = pyproject_text.replace(
-            'description = "Add your description here"',
+            f'description = "{old_desc}"',
             f'description = "{description}"',
         )
     pyproject_path.write_text(pyproject_text)
 
     readme_path = PROJECT_ROOT / "README.md"
     readme_text = readme_path.read_text()
-    readme_text = readme_text.replace("# Python-Template", f"# {name}", 1)
+    readme_text = re.sub(
+        r"^#\s+.*$", f"# {name}", readme_text, count=1, flags=re.MULTILINE
+    )
     if description:
-        readme_text = readme_text.replace(
-            "<b>Opinionated Python project stack. 🔋 Batteries included. </b>",
+        readme_text = re.sub(
+            r"<b>.*?</b>",
             f"<b>{description}</b>",
-            1,
+            readme_text,
+            count=1,
         )
     readme_path.write_text(readme_text)
 
@@ -466,24 +484,26 @@ def cli_name() -> None:
     """Step 3: Choose the CLI command name (renames all 'mycli' references)."""
     current = _read_cli_name()
     if current != "mycli":
-        rprint(
-            f"[blue]ℹ CLI already renamed to '{current}'. Skipping CLI name step.[/blue]"
-        )
-        return
+        rprint(f"[blue]ℹ CLI currently named '{current}'.[/blue]")
+        re_rename = questionary.confirm("Re-rename the CLI?", default=False).ask()
+        if re_rename is None:
+            raise typer.Abort()
+        if not re_rename:
+            return
 
     name = questionary.text(
         "CLI command name (e.g. my-tool):",
-        default="mycli",
+        default=current,
         validate=_validate_cli_name,
     ).ask()
     if name is None:
         raise typer.Abort()
 
-    if name == "mycli":
-        rprint("[yellow]Keeping default name 'mycli'.[/yellow]")
+    if name == current:
+        rprint(f"[yellow]Keeping current name '{current}'.[/yellow]")
         return
 
-    changed_files = _replace_cli_name("mycli", name)
+    changed_files = _replace_cli_name(current, name)
 
     if not changed_files:
         rprint("[yellow]No files needed updating.[/yellow]")
@@ -491,7 +511,7 @@ def cli_name() -> None:
 
     rprint(
         Panel(
-            f"Renamed CLI from [red]mycli[/red] → [green]{name}[/green]\n\n"
+            f"Renamed CLI from [red]{current}[/red] → [green]{name}[/green]\n\n"
             "Updated files:\n" + "\n".join(f"  {f}" for f in changed_files),
             title="✅ CLI Name Complete",
             border_style="green",
