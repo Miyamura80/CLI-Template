@@ -82,12 +82,16 @@ class TestDryRun(TestTemplate):
             dry_run.reset(token)
 
     def test_dry_run_guard_runs_when_inactive(self):
-        called = False
+        token = dry_run.set(False)
+        try:
+            called = False
 
-        @dry_run_guard("do something")
-        def action():
-            nonlocal called
-            called = True
+            @dry_run_guard("do something")
+            def action():
+                nonlocal called
+                called = True
 
-        action()
-        assert called
+            action()
+            assert called
+        finally:
+            dry_run.reset(token)
