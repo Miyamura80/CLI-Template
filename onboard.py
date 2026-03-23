@@ -321,6 +321,138 @@ def branding() -> None:
     )
 
 
+_RENAME_EXTENSIONS = {
+    ".py", ".toml", ".md", ".mdx", ".yml", ".yaml",
+    ".json", ".tsx", ".ts", ".sh", ".txt",
+}
+_RENAME_SKIP_DIRS = {".venv", ".venv-test", ".git", "node_modules", "__pycache__", ".uv_cache"}
+_RENAME_SKIP_FILES = {"uv.lock", "onboard.py", "install-skills.sh"}
+
+
+def _should_process(path: Path) -> bool:
+    """Check if a file should be included in bulk replacement."""
+    if not path.is_file() or path.suffix not in _RENAME_EXTENSIONS:
+        return False
+    if path.name in _RENAME_SKIP_FILES:
+        return False
+    return not any(part in _RENAME_SKIP_DIRS for part in path.parts)
+
+
+def _apply_replacements(text: str, replacements: list[tuple[str, str]]) -> str:
+    """Apply all replacement pairs to a string."""
+    for old, new in replacements:
+        text = text.replace(old, new)
+    return text
+
+
+def _replace_in_files(replacements: list[tuple[str, str]]) -> list[str]:
+    """Replace old->new pairs across all matching files in the project.
+
+    Skips .venv, .git, node_modules, __pycache__, and uv.lock.
+    Returns a list of relative paths that were modified.
+    """
+    changed: list[str] = []
+    for path in sorted(PROJECT_ROOT.rglob("*")):
+        if not _should_process(path):
+            continue
+        try:
+            text = path.read_text()
+        except (UnicodeDecodeError, PermissionError):
+            continue
+        new_text = _apply_replacements(text, replacements)
+        if new_text != text:
+            path.write_text(new_text)
+            changed.append(str(path.relative_to(PROJECT_ROOT)))
+    return changed
+
+
+#: Template values that get replaced during onboarding rename
+_TEMPLATE_PACKAGE_NAME = "miyamura80-cli-template"
+_TEMPLATE_OWNER = "Miyamura80"
+_TEMPLATE_REPO_NAME = "CLI-Template"
+
+
+def _read_github_owner_repo() -> tuple[str, str]:
+    """Extract owner and repo from the git remote URL. Falls back to placeholders."""
+    try:
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            cwd=PROJECT_ROOT,
+            timeout=5,
+        )
+        url = result.stdout.strip()
+        match = re.search(r"github\.com[:/]([^/]+)/([^/.]+?)(?:\.git)?$", url)
+        if match:
+            return match.group(1), match.group(2)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    return "OWNER", "REPO"
+
+
+def _build_rename_replacements(
+    name: str,
+    description: str,
+    github_owner: str,
+    github_repo: str,
+) -> list[tuple[str, str]]:
+    """Build replacement pairs for the rename step (order matters, most specific first)."""
+    pairs: list[tuple[str, str]] = []
+
+    # Package name (PyPI)
+    pairs.append((_TEMPLATE_PACKAGE_NAME, name))
+    if "python-template" not in name:
+        pairs.append(("python-template", name))
+
+    # GitHub owner/repo URLs
+    pairs.append((f"{_TEMPLATE_OWNER}/{_TEMPLATE_REPO_NAME}", f"{github_owner}/{github_repo}"))
+    # URL-encoded form (used in badge URLs)
+    pairs.append((
+        f"{_TEMPLATE_OWNER}%2F{_TEMPLATE_REPO_NAME}",
+        f"{github_owner}%2F{github_repo}",
+    ))
+
+    # Standalone owner references (CODEOWNERS, author)
+    pairs.append((f"@{_TEMPLATE_OWNER}", f"@{github_owner}"))
+    pairs.append((f'name = "{_TEMPLATE_OWNER}"', f'name = "{github_owner}"'))
+
+    if description:
+        safe_description = description.replace('"', '\\"')
+        pairs.append(("Add your description here", safe_description))
+
+    pairs.append(("# cli-template", f"# {name}"))
+    return pairs
+
+
+def _prompt_github_info() -> tuple[str, str]:
+    """Prompt for GitHub owner and repo, auto-detecting from git remote."""
+    github_owner, github_repo = _read_github_owner_repo()
+
+    def _nonempty(v: str) -> bool | str:
+        return True if v.strip() else "Cannot be empty."
+
+    if github_owner in ("OWNER", _TEMPLATE_OWNER):
+        entered = questionary.text(
+            "GitHub owner/org (e.g. my-github-username):",
+            validate=_nonempty,
+        ).ask()
+        if entered is None:
+            raise typer.Abort()
+        github_owner = entered.strip()
+
+    if github_repo in ("REPO", _TEMPLATE_REPO_NAME):
+        entered = questionary.text(
+            "GitHub repository name:",
+            validate=_nonempty,
+        ).ask()
+        if entered is None:
+            raise typer.Abort()
+        github_repo = entered.strip()
+
+    return github_owner, github_repo
+
+
 def _read_pyproject_description() -> str:
     """Read the current project description from pyproject.toml."""
     text = (PROJECT_ROOT / "pyproject.toml").read_text()
@@ -332,7 +464,7 @@ def _read_pyproject_description() -> str:
 def rename() -> None:
     """Step 2: Rename the project and update metadata."""
     current_name = _read_pyproject_name()
-    if current_name != "python-template":
+    if current_name not in ("python-template", _TEMPLATE_PACKAGE_NAME):
         rprint(f"[blue]ℹ Project currently named '{current_name}'.[/blue]")
         re_rename = questionary.confirm("Re-rename the project?", default=False).ask()
         if re_rename is None:
@@ -342,7 +474,7 @@ def rename() -> None:
 
     name = questionary.text(
         "Project name (kebab-case):",
-        default=current_name if current_name != "python-template" else "",
+        default=current_name if current_name not in ("python-template", _TEMPLATE_PACKAGE_NAME) else "",
         validate=_validate_kebab_case,
     ).ask()
     if name is None:
@@ -356,41 +488,21 @@ def rename() -> None:
     if description is None:
         raise typer.Abort()
 
-    pyproject_path = PROJECT_ROOT / "pyproject.toml"
-    pyproject_text = pyproject_path.read_text()
-    pyproject_text = pyproject_text.replace(
-        f'name = "{current_name}"', f'name = "{name}"'
-    )
-    if description:
-        old_desc = current_desc if current_desc else "Add your description here"
-        pyproject_text = pyproject_text.replace(
-            f'description = "{old_desc}"',
-            f'description = "{description}"',
-        )
-    pyproject_path.write_text(pyproject_text)
+    github_owner, github_repo = _prompt_github_info()
+    replacements = _build_rename_replacements(name, description, github_owner, github_repo)
+    changed_files = _replace_in_files(replacements)
 
-    readme_path = PROJECT_ROOT / "README.md"
-    readme_text = readme_path.read_text()
-    readme_text = re.sub(
-        r"^#\s+.*$", lambda _: f"# {name}", readme_text, count=1, flags=re.MULTILINE
-    )
+    summary_lines = [
+        f"Package name: [green]{name}[/green]",
+        f"GitHub:       [green]{github_owner}/{github_repo}[/green]",
+    ]
     if description:
-        readme_text = re.sub(
-            r"<b>.*?</b>",
-            lambda _: f"<b>{description}</b>",
-            readme_text,
-            count=1,
-        )
-    readme_path.write_text(readme_text)
+        summary_lines.append(f"Description:  [green]{description}[/green]")
+    summary_lines.append("")
+    summary_lines.append(f"Updated [bold]{len(changed_files)}[/bold] file(s):")
+    summary_lines.extend(f"  [green]{f}[/green]" for f in changed_files)
 
-    changes = [f"[green]pyproject.toml[/green] name → {name}"]
-    if description:
-        changes.append(f"[green]pyproject.toml[/green] description → {description}")
-    changes.append(f"[green]README.md[/green] heading → # {name}")
-    if description:
-        changes.append(f"[green]README.md[/green] tagline → {description}")
-
-    rprint(Panel("\n".join(changes), title="✅ Rename Complete", border_style="green"))
+    rprint(Panel("\n".join(summary_lines), title="✅ Rename Complete", border_style="green"))
 
 
 def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
@@ -448,6 +560,8 @@ def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
     # Files where we use regex word-boundary replacement instead of literal
     regex_replacements: list[tuple[Path, str, str]] = [
         (PROJECT_ROOT / "README.md", rf"\b{re.escape(old_name)}\b", new_name),
+        (PROJECT_ROOT / "release.md", rf"\b{re.escape(old_name)}\b", new_name),
+        (PROJECT_ROOT / ".claude" / "skills" / "usage" / "SKILL.md", rf"\b{re.escape(old_name)}\b", new_name),
     ]
 
     changes: list[str] = []

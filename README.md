@@ -33,6 +33,19 @@
 </p>
 
 
+## Agent Prompt
+
+> Copy and paste this into your AI coding agent (Claude Code, Cursor, Copilot, etc.) to install:
+
+```text
+Install the CLI and download the usage skill:
+
+pip install miyamura80-cli-template
+
+curl -fsSL https://raw.githubusercontent.com/Miyamura80/CLI-Template/main/scripts/install-skills.sh -o install-skills.sh
+bash install-skills.sh && rm install-skills.sh
+```
+
 ## Key Features
 
 Opinionated Python CLI template for fast development. The `saas` branch extends `main` with web framework, auth, and payments.

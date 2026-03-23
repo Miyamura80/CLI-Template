@@ -262,3 +262,32 @@ requirements:
 	@echo "$(YELLOW)🔍Checking requirements...$(RESET)"
 	@cp requirements-dev.lock requirements.txt
 	@echo "$(GREEN)✅Requirements checked.$(RESET)"
+
+########################################################
+# Release
+########################################################
+
+### Release
+BUMP ?= patch
+
+bump_version: ## Bump version (BUMP=patch|minor|major), commit, and tag
+	@git diff --cached --quiet || { echo "$(RED)Staging area is not clean. Commit or unstage changes first.$(RESET)"; exit 1; }; \
+	git diff --quiet || { echo "$(RED)Working tree is not clean. Commit or stash changes first.$(RESET)"; exit 1; }; \
+	CURRENT=$$(grep -m1 '^version' pyproject.toml | sed 's/.*"\(.*\)"/\1/'); \
+	MAJOR=$$(echo $$CURRENT | cut -d. -f1); \
+	MINOR=$$(echo $$CURRENT | cut -d. -f2); \
+	PATCH=$$(echo $$CURRENT | cut -d. -f3); \
+	case "$(BUMP)" in \
+		major) MAJOR=$$((MAJOR + 1)); MINOR=0; PATCH=0 ;; \
+		minor) MINOR=$$((MINOR + 1)); PATCH=0 ;; \
+		patch) PATCH=$$((PATCH + 1)) ;; \
+		*) echo "$(RED)Invalid BUMP value '$(BUMP)'. Use patch, minor, or major.$(RESET)"; exit 1 ;; \
+	esac; \
+	NEW="$$MAJOR.$$MINOR.$$PATCH"; \
+	echo "$(YELLOW)Bumping version: $$CURRENT → $$NEW$(RESET)"; \
+	sed -i '' "s/^version = \"$$CURRENT\"/version = \"$$NEW\"/" pyproject.toml; \
+	git add pyproject.toml; \
+	git commit -m "chore: bump version to v$$NEW"; \
+	git tag -a "v$$NEW" -m "Release v$$NEW"; \
+	echo "$(GREEN)✅ Version bumped to v$$NEW and tagged.$(RESET)"; \
+	echo "$(BLUE)Run 'git push && git push --tags' to trigger the release workflow.$(RESET)"
