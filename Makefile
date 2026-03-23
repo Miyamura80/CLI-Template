@@ -285,9 +285,9 @@ bump_version: ## Bump version (BUMP=patch|minor|major), commit, and tag
 	esac; \
 	NEW="$$MAJOR.$$MINOR.$$PATCH"; \
 	echo "$(YELLOW)Bumping version: $$CURRENT → $$NEW$(RESET)"; \
-	perl -i -pe "s/^version = \"\Q$$CURRENT\E\"/version = \"$$NEW\"/" pyproject.toml; \
-	git add pyproject.toml; \
-	git commit -m "chore: bump version to v$$NEW"; \
-	git tag -a "v$$NEW" -m "Release v$$NEW"; \
+	perl -i -pe "s/^version = \"\Q$$CURRENT\E\"/version = \"$$NEW\"/" pyproject.toml && \
+	git add pyproject.toml && \
+	git commit -m "⚙️ bump version to v$$NEW" && \
+	git tag -a "v$$NEW" -m "Release v$$NEW" && \
 	echo "$(GREEN)✅ Version bumped to v$$NEW and tagged.$(RESET)"; \
 	echo "$(BLUE)Run 'git push && git push --tags' to trigger the release workflow.$(RESET)"
