@@ -428,8 +428,6 @@ def _build_rename_replacements(
         old_desc = current_desc if current_desc else "Add your description here"
         pairs.append((old_desc, safe_description))
 
-    # README heading
-    pairs.append((f"# {from_name}", f"# {name}"))
     return pairs
 
 
@@ -499,6 +497,19 @@ def rename() -> None:
     github_owner, github_repo = _prompt_github_info()
     replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_name, current_desc)
     changed_files = _replace_in_files(replacements)
+
+    # Update README heading via regex (handles any existing first-level heading)
+    readme_path = PROJECT_ROOT / "README.md"
+    if readme_path.exists():
+        readme_text = readme_path.read_text()
+        new_readme = re.sub(
+            r"^#\s+.*$", f"# {name}", readme_text, count=1, flags=re.MULTILINE
+        )
+        if new_readme != readme_text:
+            readme_path.write_text(new_readme)
+            rel = str(readme_path.relative_to(PROJECT_ROOT))
+            if rel not in changed_files:
+                changed_files.append(rel)
 
     summary_lines = [
         f"Package name: [green]{name}[/green]",
