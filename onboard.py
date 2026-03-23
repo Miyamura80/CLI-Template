@@ -434,25 +434,31 @@ def _build_rename_replacements(
     return pairs
 
 
-def _prompt_github_info() -> tuple[str, str]:
-    """Prompt for GitHub owner and repo, auto-detecting from git remote."""
+def _prompt_github_info(force_prompt: bool = False) -> tuple[str, str]:
+    """Prompt for GitHub owner and repo, auto-detecting from git remote.
+
+    On first rename, only prompts when sentinels or template values are detected.
+    When force_prompt is True (re-rename), always prompts with current values as defaults.
+    """
     github_owner, github_repo = _read_github_owner_repo()
 
     def _nonempty(v: str) -> bool | str:
         return True if v.strip() else "Cannot be empty."
 
-    if github_owner in ("OWNER", _TEMPLATE_OWNER):
+    if force_prompt or github_owner in ("OWNER", _TEMPLATE_OWNER):
         entered = questionary.text(
             "GitHub owner/org (e.g. my-github-username):",
+            default=github_owner if github_owner not in ("OWNER", _TEMPLATE_OWNER) else "",
             validate=_nonempty,
         ).ask()
         if entered is None:
             raise typer.Abort()
         github_owner = entered.strip()
 
-    if github_repo in ("REPO", _TEMPLATE_REPO_NAME):
+    if force_prompt or github_repo in ("REPO", _TEMPLATE_REPO_NAME):
         entered = questionary.text(
             "GitHub repository name:",
+            default=github_repo if github_repo not in ("REPO", _TEMPLATE_REPO_NAME) else "",
             validate=_nonempty,
         ).ask()
         if entered is None:
@@ -473,7 +479,8 @@ def _read_pyproject_description() -> str:
 def rename() -> None:
     """Step 2: Rename the project and update metadata."""
     current_name = _read_pyproject_name()
-    if current_name not in ("python-template", _TEMPLATE_PACKAGE_NAME):
+    is_re_rename = current_name not in ("python-template", _TEMPLATE_PACKAGE_NAME)
+    if is_re_rename:
         rprint(f"[blue]ℹ Project currently named '{current_name}'.[/blue]")
         re_rename = questionary.confirm("Re-rename the project?", default=False).ask()
         if re_rename is None:
@@ -483,7 +490,7 @@ def rename() -> None:
 
     name = questionary.text(
         "Project name (kebab-case):",
-        default=current_name if current_name not in ("python-template", _TEMPLATE_PACKAGE_NAME) else "",
+        default=current_name if is_re_rename else "",
         validate=_validate_kebab_case,
     ).ask()
     if name is None:
@@ -497,7 +504,7 @@ def rename() -> None:
     if description is None:
         raise typer.Abort()
 
-    github_owner, github_repo = _prompt_github_info()
+    github_owner, github_repo = _prompt_github_info(force_prompt=is_re_rename)
     replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_name, current_desc)
     changed_files = _replace_in_files(replacements)
 
