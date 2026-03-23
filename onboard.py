@@ -398,6 +398,8 @@ def _build_rename_replacements(
     github_repo: str,
     current_name: str = "",
     current_desc: str = "",
+    current_owner: str = "",
+    current_repo: str = "",
 ) -> list[tuple[str, str]]:
     """Build replacement pairs for the rename step (order matters, most specific first)."""
     pairs: list[tuple[str, str]] = []
@@ -408,10 +410,9 @@ def _build_rename_replacements(
     if "python-template" not in name and from_name != "python-template":
         pairs.append(("python-template", name))
 
-    # GitHub owner/repo URLs - read current owner/repo from git remote
-    current_owner, current_repo = _read_github_owner_repo()
-    from_owner = current_owner if current_owner != "OWNER" else _TEMPLATE_OWNER
-    from_repo = current_repo if current_repo != "REPO" else _TEMPLATE_REPO_NAME
+    # GitHub owner/repo URLs
+    from_owner = current_owner if current_owner not in ("", "OWNER") else _TEMPLATE_OWNER
+    from_repo = current_repo if current_repo not in ("", "REPO") else _TEMPLATE_REPO_NAME
     pairs.append((f"{from_owner}/{from_repo}", f"{github_owner}/{github_repo}"))
     # URL-encoded form (used in badge URLs)
     pairs.append((
@@ -436,13 +437,19 @@ def _build_rename_replacements(
     return pairs
 
 
-def _prompt_github_info(force_prompt: bool = False) -> tuple[str, str]:
+def _prompt_github_info(
+    force_prompt: bool = False,
+) -> tuple[str, str, str, str]:
     """Prompt for GitHub owner and repo, auto-detecting from git remote.
 
     On first rename, only prompts when sentinels or template values are detected.
     When force_prompt is True (re-rename), always prompts with current values as defaults.
+
+    Returns (new_owner, new_repo, raw_owner, raw_repo) where raw values are the
+    pre-prompt values read from git remote (used as "from" values in replacements).
     """
-    github_owner, github_repo = _read_github_owner_repo()
+    raw_owner, raw_repo = _read_github_owner_repo()
+    github_owner, github_repo = raw_owner, raw_repo
 
     def _nonempty(v: str) -> bool | str:
         return True if v.strip() else "Cannot be empty."
@@ -467,7 +474,7 @@ def _prompt_github_info(force_prompt: bool = False) -> tuple[str, str]:
             raise typer.Abort()
         github_repo = entered.strip()
 
-    return github_owner, github_repo
+    return github_owner, github_repo, raw_owner, raw_repo
 
 
 def _read_pyproject_description() -> str:
@@ -531,8 +538,11 @@ def rename() -> None:
     if description is None:
         raise typer.Abort()
 
-    github_owner, github_repo = _prompt_github_info(force_prompt=is_re_rename)
-    replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_name, current_desc)
+    github_owner, github_repo, raw_owner, raw_repo = _prompt_github_info(force_prompt=is_re_rename)
+    replacements = _build_rename_replacements(
+        name, description, github_owner, github_repo,
+        current_name, current_desc, raw_owner, raw_repo,
+    )
     changed_files = _replace_in_files(replacements)
     _update_readme_heading_and_tagline(name, description, changed_files)
 
