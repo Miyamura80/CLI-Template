@@ -508,13 +508,20 @@ def rename() -> None:
     replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_name, current_desc)
     changed_files = _replace_in_files(replacements)
 
-    # Update README heading via regex (handles any existing first-level heading)
+    # Update README heading and tagline via regex (these differ from pyproject.toml values)
     readme_path = PROJECT_ROOT / "README.md"
     if readme_path.exists():
         readme_text = readme_path.read_text()
         new_readme = re.sub(
             r"^#\s+.*$", f"# {name}", readme_text, count=1, flags=re.MULTILINE
         )
+        if description:
+            new_readme = re.sub(
+                r"<b>.*?</b>",
+                lambda _: f"<b>{description}</b>",
+                new_readme,
+                count=1,
+            )
         if new_readme != readme_text:
             readme_path.write_text(new_readme)
             rel = str(readme_path.relative_to(PROJECT_ROOT))
