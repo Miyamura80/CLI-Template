@@ -420,7 +420,9 @@ def _build_rename_replacements(
     ))
 
     # Standalone repo directory name (e.g. in `cd CLI-Template`)
-    pairs.append((from_repo, github_repo))
+    # Skip if from_repo is a substring of github_repo to avoid double-substitution
+    if from_repo not in github_repo:
+        pairs.append((from_repo, github_repo))
 
     # Standalone owner references (CODEOWNERS, author)
     pairs.append((f"@{from_owner}", f"@{github_owner}"))
