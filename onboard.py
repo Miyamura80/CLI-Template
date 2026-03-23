@@ -396,34 +396,40 @@ def _build_rename_replacements(
     description: str,
     github_owner: str,
     github_repo: str,
+    current_name: str = "",
     current_desc: str = "",
 ) -> list[tuple[str, str]]:
     """Build replacement pairs for the rename step (order matters, most specific first)."""
     pairs: list[tuple[str, str]] = []
 
-    # Package name (PyPI)
-    pairs.append((_TEMPLATE_PACKAGE_NAME, name))
-    if "python-template" not in name:
+    # Package name (PyPI) - use live current name, fall back to template constant
+    from_name = current_name if current_name else _TEMPLATE_PACKAGE_NAME
+    pairs.append((from_name, name))
+    if "python-template" not in name and from_name != "python-template":
         pairs.append(("python-template", name))
 
-    # GitHub owner/repo URLs
-    pairs.append((f"{_TEMPLATE_OWNER}/{_TEMPLATE_REPO_NAME}", f"{github_owner}/{github_repo}"))
+    # GitHub owner/repo URLs - read current owner/repo from git remote
+    current_owner, current_repo = _read_github_owner_repo()
+    from_owner = current_owner if current_owner != "OWNER" else _TEMPLATE_OWNER
+    from_repo = current_repo if current_repo != "REPO" else _TEMPLATE_REPO_NAME
+    pairs.append((f"{from_owner}/{from_repo}", f"{github_owner}/{github_repo}"))
     # URL-encoded form (used in badge URLs)
     pairs.append((
-        f"{_TEMPLATE_OWNER}%2F{_TEMPLATE_REPO_NAME}",
+        f"{from_owner}%2F{from_repo}",
         f"{github_owner}%2F{github_repo}",
     ))
 
     # Standalone owner references (CODEOWNERS, author)
-    pairs.append((f"@{_TEMPLATE_OWNER}", f"@{github_owner}"))
-    pairs.append((f'name = "{_TEMPLATE_OWNER}"', f'name = "{github_owner}"'))
+    pairs.append((f"@{from_owner}", f"@{github_owner}"))
+    pairs.append((f'name = "{from_owner}"', f'name = "{github_owner}"'))
 
     if description:
         safe_description = description.replace('"', '\\"')
         old_desc = current_desc if current_desc else "Add your description here"
         pairs.append((old_desc, safe_description))
 
-    pairs.append(("# cli-template", f"# {name}"))
+    # README heading
+    pairs.append((f"# {from_name}", f"# {name}"))
     return pairs
 
 
@@ -491,7 +497,7 @@ def rename() -> None:
         raise typer.Abort()
 
     github_owner, github_repo = _prompt_github_info()
-    replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_desc)
+    replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_name, current_desc)
     changed_files = _replace_in_files(replacements)
 
     summary_lines = [
