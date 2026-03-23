@@ -19,7 +19,7 @@ This project ships a CLI from a single version in `pyproject.toml`:
    - Environment name: `release`
 3. In your GitHub repo, go to **Settings > Environments** and create an environment called `release`
 
-No API tokens needed — GitHub Actions authenticates via OIDC.
+No API tokens needed - GitHub Actions authenticates via OIDC.
 
 ## Quick Release
 
@@ -32,7 +32,7 @@ make bump_version              # 0.1.0 → 0.1.1
 make bump_version BUMP=minor   # 0.1.0 → 0.2.0
 make bump_version BUMP=major   # 0.1.0 → 1.0.0
 
-# 3. Push commit and tag — triggers the release workflow
+# 3. Push commit and tag - triggers the release workflow
 git push && git push --tags
 ```
 
@@ -61,9 +61,9 @@ git push && git push --tags
 
 Versions follow [Semantic Versioning](https://semver.org/):
 
-- **MAJOR** — breaking changes
-- **MINOR** — new features, backwards compatible
-- **PATCH** — bug fixes, backwards compatible
+- **MAJOR** - breaking changes
+- **MINOR** - new features, backwards compatible
+- **PATCH** - bug fixes, backwards compatible
 
 The version is the single source of truth in `pyproject.toml` under `[project] version`.
 
