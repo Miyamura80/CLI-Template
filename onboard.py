@@ -326,7 +326,7 @@ _RENAME_EXTENSIONS = {
     ".json", ".tsx", ".ts", ".sh", ".txt",
 }
 _RENAME_SKIP_DIRS = {".venv", ".venv-test", ".git", "node_modules", "__pycache__", ".uv_cache"}
-_RENAME_SKIP_FILES = {"uv.lock", "onboard.py", "install-skills.sh"}
+_RENAME_SKIP_FILES = {"uv.lock", "onboard.py"}
 
 
 def _should_process(path: Path) -> bool:
@@ -396,6 +396,7 @@ def _build_rename_replacements(
     description: str,
     github_owner: str,
     github_repo: str,
+    current_desc: str = "",
 ) -> list[tuple[str, str]]:
     """Build replacement pairs for the rename step (order matters, most specific first)."""
     pairs: list[tuple[str, str]] = []
@@ -419,7 +420,8 @@ def _build_rename_replacements(
 
     if description:
         safe_description = description.replace('"', '\\"')
-        pairs.append(("Add your description here", safe_description))
+        old_desc = current_desc if current_desc else "Add your description here"
+        pairs.append((old_desc, safe_description))
 
     pairs.append(("# cli-template", f"# {name}"))
     return pairs
@@ -489,7 +491,7 @@ def rename() -> None:
         raise typer.Abort()
 
     github_owner, github_repo = _prompt_github_info()
-    replacements = _build_rename_replacements(name, description, github_owner, github_repo)
+    replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_desc)
     changed_files = _replace_in_files(replacements)
 
     summary_lines = [

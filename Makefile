@@ -285,7 +285,7 @@ bump_version: ## Bump version (BUMP=patch|minor|major), commit, and tag
 	esac; \
 	NEW="$$MAJOR.$$MINOR.$$PATCH"; \
 	echo "$(YELLOW)Bumping version: $$CURRENT → $$NEW$(RESET)"; \
-	sed -i '' "s/^version = \"$$CURRENT\"/version = \"$$NEW\"/" pyproject.toml; \
+	perl -i -pe "s/^version = \"$$CURRENT\"/version = \"$$NEW\"/" pyproject.toml; \
 	git add pyproject.toml; \
 	git commit -m "chore: bump version to v$$NEW"; \
 	git tag -a "v$$NEW" -m "Release v$$NEW"; \
