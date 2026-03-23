@@ -40,3 +40,10 @@ class TestOnboard(TestTemplate):
 
         assert pyproject.read_text() == 'name = "my-tool"\ndescription = "path\\1 tool"\n'
         assert changed_files == ["pyproject.toml"]
+
+    def test_read_pyproject_description_handles_escaped_quotes(self, tmp_path, monkeypatch):
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text('name = "my-tool"\n[project]\ndescription = "My \\"awesome\\" tool"\n')
+        monkeypatch.setattr(onboard, "PROJECT_ROOT", tmp_path)
+
+        assert onboard._read_pyproject_description() == 'My "awesome" tool'

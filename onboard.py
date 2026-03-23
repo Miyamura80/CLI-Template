@@ -479,8 +479,13 @@ def _prompt_github_info(
 def _read_pyproject_description() -> str:
     """Read the current project description from pyproject.toml."""
     text = (PROJECT_ROOT / "pyproject.toml").read_text()
-    match = re.search(r'^description\s*=\s*"([^"]*)"', text, re.MULTILINE)
-    return match.group(1) if match else ""
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError:
+        return ""
+    project = data.get("project", {})
+    description = project.get("description", "")
+    return description if isinstance(description, str) else ""
 
 
 def _update_readme_heading_and_tagline(
