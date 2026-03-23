@@ -518,7 +518,7 @@ def _update_pyproject_description(description: str, changed_files: list[str]) ->
     safe_description = description.replace('"', '\\"')
     new_text = re.sub(
         r'^description\s*=\s*".*"$',
-        f'description = "{safe_description}"',
+        lambda _: f'description = "{safe_description}"',
         text,
         count=1,
         flags=re.MULTILINE,
