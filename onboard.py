@@ -475,6 +475,31 @@ def _read_pyproject_description() -> str:
     return match.group(1) if match else ""
 
 
+def _update_readme_heading_and_tagline(
+    name: str, description: str, changed_files: list[str]
+) -> None:
+    """Update README heading and tagline via regex (these differ from pyproject.toml values)."""
+    readme_path = PROJECT_ROOT / "README.md"
+    if not readme_path.exists():
+        return
+    readme_text = readme_path.read_text()
+    new_readme = re.sub(
+        r"^#\s+.*$", f"# {name}", readme_text, count=1, flags=re.MULTILINE
+    )
+    if description:
+        new_readme = re.sub(
+            r"<b>.*?</b>",
+            lambda _: f"<b>{description}</b>",
+            new_readme,
+            count=1,
+        )
+    if new_readme != readme_text:
+        readme_path.write_text(new_readme)
+        rel = str(readme_path.relative_to(PROJECT_ROOT))
+        if rel not in changed_files:
+            changed_files.append(rel)
+
+
 @app.command()
 def rename() -> None:
     """Step 2: Rename the project and update metadata."""
@@ -507,26 +532,7 @@ def rename() -> None:
     github_owner, github_repo = _prompt_github_info(force_prompt=is_re_rename)
     replacements = _build_rename_replacements(name, description, github_owner, github_repo, current_name, current_desc)
     changed_files = _replace_in_files(replacements)
-
-    # Update README heading and tagline via regex (these differ from pyproject.toml values)
-    readme_path = PROJECT_ROOT / "README.md"
-    if readme_path.exists():
-        readme_text = readme_path.read_text()
-        new_readme = re.sub(
-            r"^#\s+.*$", f"# {name}", readme_text, count=1, flags=re.MULTILINE
-        )
-        if description:
-            new_readme = re.sub(
-                r"<b>.*?</b>",
-                lambda _: f"<b>{description}</b>",
-                new_readme,
-                count=1,
-            )
-        if new_readme != readme_text:
-            readme_path.write_text(new_readme)
-            rel = str(readme_path.relative_to(PROJECT_ROOT))
-            if rel not in changed_files:
-                changed_files.append(rel)
+    _update_readme_heading_and_tagline(name, description, changed_files)
 
     summary_lines = [
         f"Package name: [green]{name}[/green]",
