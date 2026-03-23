@@ -430,9 +430,8 @@ def _build_rename_replacements(
     pairs.append((f'name = "{from_owner}"', f'name = "{github_owner}"'))
 
     if description:
-        safe_description = description.replace('"', '\\"')
         old_desc = current_desc if current_desc else "Add your description here"
-        pairs.append((old_desc, safe_description))
+        pairs.append((old_desc, description))
 
     return pairs
 
@@ -509,6 +508,28 @@ def _update_readme_heading_and_tagline(
             changed_files.append(rel)
 
 
+def _update_pyproject_description(description: str, changed_files: list[str]) -> None:
+    """Ensure pyproject.toml stores the description with TOML-safe escaping."""
+    if not description:
+        return
+
+    pyproject_path = PROJECT_ROOT / "pyproject.toml"
+    text = pyproject_path.read_text()
+    safe_description = description.replace('"', '\\"')
+    new_text = re.sub(
+        r'^description\s*=\s*".*"$',
+        f'description = "{safe_description}"',
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    if new_text != text:
+        pyproject_path.write_text(new_text)
+        rel = str(pyproject_path.relative_to(PROJECT_ROOT))
+        if rel not in changed_files:
+            changed_files.append(rel)
+
+
 @app.command()
 def rename() -> None:
     """Step 2: Rename the project and update metadata."""
@@ -544,6 +565,7 @@ def rename() -> None:
         current_name, current_desc, raw_owner, raw_repo,
     )
     changed_files = _replace_in_files(replacements)
+    _update_pyproject_description(description, changed_files)
     _update_readme_heading_and_tagline(name, description, changed_files)
 
     summary_lines = [
