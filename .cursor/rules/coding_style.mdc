@@ -1,13 +1,41 @@
 ---
-description: Coding style rules
-globs: 
+description: Python coding style for CLI-Template
+globs:
+  - "src/**/*.py"
+  - "tests/**/*.py"
+  - "common/**/*.py"
+  - "utils/**/*.py"
+  - "**/*.py"
 alwaysApply: true
 ---
 ## Stylistic preferences
-- Use snake case for all function, file, and directory names
-- Use camel case for class names
-- Use all lowercase for variable names
-- Use all uppercase for constants
+
+- Use snake_case for all function, file, and directory names
+- Use PascalCase for class names
+- Use lowercase for variable names
+- Use UPPER_SNAKE_CASE for constants
 - Use 4 spaces for indentation
 - Use double quotes for strings
+- Type hints for all function signatures, using modern syntax (instead of Optional[T], use T | None, instead of List[T], use list[T], etc)
+- Blank lines must contain no whitespace. Never add spaces or tabs to empty lines
 - Don't make markdown docs/references unless explicitly told
+
+## Imports
+
+**ALL imports must be at the top of the file, never inline in functions.**
+
+```python
+# Good: Top-level imports
+from common import global_config
+
+def my_function():
+    value = global_config.example_key
+    ...
+
+# Bad: Inline imports
+def my_function():
+    from common import global_config  # Never do this
+    value = global_config.example_key
+```
+
+**Exceptions**: None. Always import at top-level even if only used in one function.

@@ -1,0 +1,98 @@
+---
+description: Project development tooling, structure, and workflow for CLI-Template
+globs:
+  - "**/*"
+alwaysApply: false
+---
+
+## Package Management
+
+This project uses `uv` for Python package management (not pip or poetry).
+
+```bash
+uv sync                      # Install all dependencies
+uv add <package>             # Add a new dependency
+uv add --dev <package>       # Add a dev dependency
+```
+
+## Make Commands
+
+### Initialization
+```bash
+make onboard         # Interactive onboarding CLI (rename, deps, env, hooks, media)
+make banner          # Generate project banner image
+make logo            # Generate logo and favicon for docs
+```
+
+### Running
+```bash
+make all             # Sync deps and run main.py
+make cli ARGS="..."  # Run the CLI with arguments
+make docs            # Run docs dev server with bun
+```
+
+### Testing
+```bash
+make test            # Run all pytest tests
+make test_fast       # Run fast tests (exclude slow/nondeterministic)
+make test_flaky      # Repeat fast tests to detect flaky tests
+make test_slow       # Run slow tests only
+make test_nondeterministic  # Run nondeterministic tests only
+```
+
+### Code Quality
+```bash
+make fmt             # Format with ruff + jq (JSON)
+make ruff            # Run ruff linter
+make vulture         # Find dead code with vulture
+make ty              # Run type checker
+make import_lint     # Enforce module boundaries with import-linter
+make check_deps      # Check for unused dependencies
+make lint_links      # Lint markdown links
+make ci              # Run all CI checks (ruff, vulture, import_lint, ty, docs_lint, lint_links, check_deps)
+```
+
+### Release
+```bash
+make bump_version BUMP=patch  # Bump version (patch|minor|major), commit, and tag
+# Then: git push && git push --tags  # Triggers release workflow
+```
+
+## Directory Structure
+
+- `common/` - Global configuration via pydantic-settings
+  - `global_config.yaml` - Base hyperparameters and config values
+  - `<name>.yaml` - Optional split configs (loaded as root key `<name>`)
+  - `global_config.py` - Config class (access via `from common import global_config`)
+  - `.env` - Secrets/API keys (git-ignored)
+- `src/` - Source code (utils/)
+- `utils/llm/` - LLM inference with DSPY and LangFuse observability
+- `tests/` - pytest tests inheriting from `TestTemplate`
+- `init/` - Initialization scripts (banner generation)
+- `docs/` - Documentation site (Fumadocs/Next.js)
+
+## Configuration
+
+Global config via pydantic-settings. All hyperparameters go in `common/global_config.yaml`, secrets in `.env`.
+
+```python
+from common import global_config
+
+global_config.example_parent.example_child  # Config values
+global_config.OPENAI_API_KEY                # Secrets from .env
+```
+
+## Coding Conventions
+
+- **ALL imports must be at the top of the file** - no inline/lazy imports
+- snake_case for functions/files/dirs, PascalCase for classes, UPPER_SNAKE_CASE for constants
+- Type hints on all function signatures using modern syntax: `T | None` not `Optional[T]`, `list[T]` not `List[T]`
+- Double quotes for strings, 4-space indentation
+- Logging: use `from loguru import logger as log` with `{}` placeholders (not f-strings)
+- Blank lines must contain no whitespace
+
+## Git Workflow
+- **Protected Branch**: `main` is protected. Do not push directly to `main`. Use PRs.
+- **Merge Strategy**: Squash and merge.
+- **Never force push**: Do not use `git push --force` or `--force-with-lease`.
+- **Pre-commit CI gate**: Always run `make ci` before committing. Fix all issues first.

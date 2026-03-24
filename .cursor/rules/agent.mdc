@@ -1,10 +1,13 @@
 ---
+description: Agent behavior after making code changes
 alwaysApply: true
 ---
 
 After major changes always run:
 - `make fmt`
 - `make ruff`
-- `make vulture` 
+- `make vulture`
 
-And if any issues rise, make sure you address them.
+And if any issues arise, make sure you address them.
+
+Before committing, always run `make ci` and ensure it passes with zero errors.

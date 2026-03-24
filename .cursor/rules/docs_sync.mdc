@@ -1,0 +1,43 @@
+---
+description: Documentation sync requirements for user-facing changes
+globs:
+  - "docs/**/*"
+alwaysApply: false
+---
+
+# Documentation Sync Requirements
+
+When making changes to user-facing features, documentation **must** be updated in the same PR.
+
+## What Requires Documentation Updates
+
+Any changes to:
+
+- **CLI commands** or arguments
+- **Configuration options** in `common/global_config.yaml` or `.env`
+- **New features** visible to users
+- **Removed or renamed features**
+- **Changed workflows or behavior**
+- **Makefile targets** that users interact with
+
+## Documentation Location
+
+User-facing documentation lives in `docs/content/`.
+
+## What to Update
+
+1. **For new features**: Create or update the relevant page with accurate descriptions
+2. **For changed behavior**: Update any documentation that references the old behavior
+3. **For removed features**: Remove or update references to the removed functionality
+
+## Automated Translation
+
+Docs under `docs/content/` are auto-translated by the **Jules Translation Sync** workflow. Do NOT manually translate doc files - edit the English source and the workflow will update all locales (`es`, `ja`, `zh`). See `docs/translation-guide.md` for the full glossary, file naming conventions, and translation rules.
+
+## Verification Steps
+
+Before completing a PR with user-facing changes:
+
+1. Search docs for references to changed components/features
+2. Verify documentation matches the new implementation
+3. Ensure navigation paths and descriptions are correct

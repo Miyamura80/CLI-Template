@@ -1,0 +1,49 @@
+---
+description: Logging standards for CLI-Template
+globs:
+  - "src/**/*.py"
+  - "utils/**/*.py"
+  - "**/*.py"
+alwaysApply: false
+---
+## Logging Configuration
+
+This project uses `loguru` for simple, structured logging.
+
+### Usage Pattern
+
+```python
+from loguru import logger as log
+from src.utils.logging_config import setup_logging
+
+setup_logging()
+
+# Use throughout the codebase
+log.info("Starting process: {}", process_name)
+log.error("Failed to complete: {}", error)
+log.debug("Configuration loaded: {}", config_value)
+```
+
+### Log Levels
+
+Available levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+### Best Practices
+
+- Use structured logging with `{}` placeholders (not f-strings)
+- Log important state changes
+- Include context in error messages
+- Use appropriate log levels
+- No custom logging configuration - keep it simple
+
+### Examples
+
+```python
+# Good
+log.info("Processing {} items", count)
+log.error("Failed to load config: {}", error)
+
+# Avoid
+print("Starting server...")  # Use logging instead
+log.info(f"Server {name}")   # Use {} placeholders, not f-strings
+```
