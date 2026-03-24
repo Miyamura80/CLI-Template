@@ -1486,7 +1486,7 @@ requires-dist = [
     { name = "import-linter", specifier = ">=2.1.1" },
     { name = "keyring", specifier = ">=25.0.0" },
     { name = "langfuse", specifier = ">=3.12.1" },
-    { name = "litellm", specifier = ">=1.59.8" },
+    { name = "litellm", specifier = ">=1.59.8,<1.82.7" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "numpy", specifier = ">=2.2.2" },
     { name = "openfeature-sdk", specifier = ">=0.7.1" },
