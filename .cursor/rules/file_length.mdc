@@ -9,13 +9,14 @@ Python files must not exceed 500 lines. This is enforced by `make file_len_check
 
 This limit exists to prevent AI-generated code from becoming monolithic and forces refactoring into smaller, more modular components.
 
-If a file genuinely needs to exceed 500 lines, add it to the `exclude` list in `pyproject.toml` under `[tool.file_length]`:
+If a file genuinely needs to exceed 500 lines, add it to the `exclude` list in `pyproject.toml` under `[tool.file_length]`. Entries must be **repo-relative paths** (e.g. `"src/models.py"`, not just `"models.py"`):
 
 ```toml
 [tool.file_length]
 max_lines = 500
 exclude = [
     "onboard.py",
+    "src/some_large_module.py",
 ]
 ```
 
