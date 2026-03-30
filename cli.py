@@ -156,6 +156,22 @@ def _register_user_commands() -> None:
     discover_commands(app)
 
 
+def _extract_command_name(args: list[str]) -> str:
+    """Return the first positional argument (subcommand), skipping flags."""
+    skip_next = False
+    for arg in args:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg.startswith("--") and "=" not in arg:
+            skip_next = True
+            continue
+        if arg.startswith("-"):
+            continue
+        return arg
+    return "<no-command>"
+
+
 def main_cli() -> None:
     """Entry point called by the console script."""
     _register_builtin_commands()
@@ -170,7 +186,7 @@ def main_cli() -> None:
     )
 
     # Determine the subcommand name from argv for telemetry
-    command_name = sys.argv[1] if len(sys.argv) > 1 else "<no-command>"
+    command_name = _extract_command_name(sys.argv[1:])
 
     start = time.monotonic()
     success = True

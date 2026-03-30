@@ -17,12 +17,23 @@ class TestFirstRunNotice(TestTemplate):
 
     @patch("src.cli.telemetry.save_state")
     @patch("src.cli.telemetry.load_state", side_effect=lambda: {})
+    @patch("src.cli.telemetry.is_enabled", return_value=True)
     @patch("src.cli.telemetry.console")
-    def test_notice_shown_on_first_run(self, mock_console, _load, mock_save):
+    def test_notice_shown_on_first_run(self, mock_console, _enabled, _load, mock_save):
         show_first_run_notice()
         mock_console.print.assert_called_once()
         saved = mock_save.call_args[0][0]
         assert saved["telemetry_notice_shown"] is True
+
+    @patch("src.cli.telemetry.save_state")
+    @patch("src.cli.telemetry.load_state", side_effect=lambda: {})
+    @patch("src.cli.telemetry.is_enabled", return_value=False)
+    @patch("src.cli.telemetry.console")
+    def test_notice_not_shown_when_disabled(self, mock_console, _enabled, _load, mock_save):
+        show_first_run_notice()
+        mock_console.print.assert_not_called()
+        # Still marks as shown so we don't re-check every run
+        mock_save.assert_called_once()
 
     @patch("src.cli.telemetry.save_state")
     @patch("src.cli.telemetry.load_state", return_value={"telemetry_notice_shown": True})
@@ -49,14 +60,22 @@ class TestIsEnabled(TestTemplate):
     def test_disabled_via_env_var(self, _load):
         assert is_enabled() is False
 
+    @patch("src.cli.telemetry.global_config")
+    @patch("src.cli.telemetry.load_state", return_value={})
+    def test_disabled_via_config(self, _load, mock_gc):
+        mock_gc.configure_mock(**{"telemetry.enabled": False})
+        assert is_enabled() is False
+
 
 class TestRecordEvent(TestTemplate):
     """record_event() writes to local JSON and optionally POSTs."""
 
+    @patch("src.cli.telemetry._TELEMETRY_FILE")
+    @patch("src.cli.telemetry._CONFIG_DIR")
     @patch("src.cli.telemetry.is_enabled", return_value=False)
-    def test_noop_when_disabled(self, _enabled):
+    def test_noop_when_disabled(self, _enabled, _dir, mock_file):
         record_event("test", 1.0, True)
-        # is_enabled() returned False, so no file should be written
+        mock_file.write_text.assert_not_called()
 
     @patch("src.cli.telemetry._post_event")
     @patch("src.cli.telemetry.global_config")

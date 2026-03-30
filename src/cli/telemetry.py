@@ -32,6 +32,8 @@ def is_enabled() -> bool:
     """Check if telemetry is enabled."""
     if os.environ.get("CLI_TELEMETRY_DISABLED", "").strip() in ("1", "true", "yes"):
         return False
+    if not global_config.telemetry.enabled:
+        return False
     state = load_state()
     return state.get("telemetry_enabled", True)
 
@@ -41,10 +43,11 @@ def show_first_run_notice() -> None:
     state = load_state()
     if state.get("telemetry_notice_shown"):
         return
-    console.print(
-        "[dim]Anonymous usage telemetry is enabled. "
-        "Run 'mycli telemetry disable' or set CLI_TELEMETRY_DISABLED=1 to opt out.[/dim]"
-    )
+    if is_enabled():
+        console.print(
+            "[dim]Anonymous usage telemetry is enabled. "
+            "Run 'mycli telemetry disable' or set CLI_TELEMETRY_DISABLED=1 to opt out.[/dim]"
+        )
     state["telemetry_notice_shown"] = True
     save_state(state)
 
