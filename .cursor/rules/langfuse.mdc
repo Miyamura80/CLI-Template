@@ -5,26 +5,42 @@ alwaysApply: false
 ---
 Langfuse is an LLM observability tool used to monitor LLM behavior in our application. It uses decorators and callbacks to record LLM inference. Always use it in LLM-related modules to ensure traceability.
 
-### Langfuse v3 Migration Guide
-As of Langfuse SDK v3.x, the `langfuse.decorators` module structure has changed.
+### Langfuse v4 API Guide
+As of Langfuse SDK v4.x, observation creation uses `start_observation()` with `as_type` and `TraceContext`.
 
 **Typical Usage:**
 
 ```python
-from langfuse import observe, get_client
+from langfuse import Langfuse, get_client
+from langfuse.types import TraceContext
+
+langfuse = Langfuse()
 
 @observe()
 def function_name(...):
-    # To rename the span/observation or update metadata:
-    get_client().update_current_span(name=f"descriptive_name_{id}")
-
-    # To get trace or observation IDs:
+    # Get trace context
     trace_id = get_client().get_current_trace_id()
-    observation_id = get_client().get_current_observation_id()
+    parent_observation_id = get_client().get_current_observation_id()
+
+    # Create observations with start_observation()
+    trace_context: TraceContext = {"trace_id": trace_id}
+    if parent_observation_id:
+        trace_context["parent_span_id"] = parent_observation_id
+
+    span = langfuse.start_observation(
+        name="span_name",
+        as_type="generation",  # or "span", "tool"
+        input=input_data,
+        trace_context=trace_context,
+    )
+
+    # End observations with update() + end() (v4 .end() accepts no kwargs)
+    span.update(output=result, model=model_name)
+    span.end()
 ```
 
-**Key Changes from v2:**
-1. Import `observe` and `get_client` directly from `langfuse`.
-2. Replace `langfuse_context` with `get_client()`.
-3. Use `update_current_span()` instead of `update_current_observation()`.
+**Key Changes from v3:**
+1. Replace `.generation()` / `.span()` with `start_observation(as_type=...)`.
+2. Use `TraceContext` dict for `trace_id` and `parent_span_id` instead of positional args.
+3. Split `.end(**kwargs)` into `.update(...)` + `.end()` — v4 `.end()` only accepts `end_time`.
 
