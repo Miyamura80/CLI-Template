@@ -6,11 +6,13 @@ import json
 import os
 import platform
 import socket
+import urllib.request
 from datetime import UTC, datetime
 
 import typer
 from rich.console import Console
 
+from common import global_config
 from src.cli.state_store import _CONFIG_DIR, load_state, save_state
 
 app = typer.Typer(no_args_is_help=True)
@@ -47,6 +49,21 @@ def show_first_run_notice() -> None:
     save_state(state)
 
 
+def _post_event(endpoint: str, event: dict) -> None:
+    """POST a single event to the remote telemetry endpoint (fire-and-forget)."""
+    try:
+        data = json.dumps(event).encode()
+        req = urllib.request.Request(
+            endpoint,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=5)  # noqa: S310
+    except Exception:
+        pass  # telemetry must never break the CLI
+
+
 def record_event(command: str, duration: float, success: bool) -> None:
     """Record a telemetry event to the local JSON file."""
     if not is_enabled():
@@ -78,6 +95,11 @@ def record_event(command: str, duration: float, success: bool) -> None:
         events = events[-_MAX_EVENTS:]
 
     _TELEMETRY_FILE.write_text(json.dumps(events, indent=2))
+
+    # POST to remote endpoint if configured
+    endpoint = global_config.telemetry.endpoint
+    if endpoint:
+        _post_event(endpoint, event)
 
 
 @app.command()

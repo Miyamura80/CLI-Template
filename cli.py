@@ -1,6 +1,8 @@
 """Main CLI entry point."""
 
 import importlib.metadata
+import sys
+import time
 from enum import StrEnum
 from typing import Annotated
 
@@ -111,6 +113,12 @@ def main(
 
         show_first_install_notice()
 
+    # One-time telemetry opt-out notice
+    if not quiet:
+        from src.cli.telemetry import show_first_run_notice
+
+        show_first_run_notice()
+
 
 _builtins_registered = False
 _user_commands_registered = False
@@ -161,4 +169,24 @@ def main_cli() -> None:
         f"[dim]v{version}[/dim] - a batteries-included Python CLI."
     )
 
-    app()
+    # Determine the subcommand name from argv for telemetry
+    command_name = sys.argv[1] if len(sys.argv) > 1 else "<no-command>"
+
+    start = time.monotonic()
+    success = True
+    try:
+        app()
+    except SystemExit as exc:
+        success = exc.code in (None, 0)
+        raise
+    except Exception:
+        success = False
+        raise
+    finally:
+        duration = time.monotonic() - start
+        try:
+            from src.cli.telemetry import record_event
+
+            record_event(command=command_name, duration=duration, success=success)
+        except Exception:
+            pass  # telemetry must never break the CLI

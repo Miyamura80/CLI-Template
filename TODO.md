@@ -4,10 +4,10 @@
 
 `record_event()` and `show_first_run_notice()` in `src/cli/telemetry.py` are implemented but never called.
 
-- [ ] Call `show_first_run_notice()` in the `main()` callback in `cli.py` so the opt-out notice displays on first use
-- [ ] Wrap `app()` in `main_cli()` to time command execution and call `record_event()` with the command name, duration, and success/failure
-- [ ] Set a telemetry endpoint in `common/global_config.yaml` (`telemetry.endpoint`) and wire `record_event()` to POST events there when the endpoint is configured
-- [ ] Add tests for telemetry integration (notice shown once, events recorded, opt-out respected)
+- [x] Call `show_first_run_notice()` in the `main()` callback in `cli.py` so the opt-out notice displays on first use
+- [x] Wrap `app()` in `main_cli()` to time command execution and call `record_event()` with the command name, duration, and success/failure
+- [x] Set a telemetry endpoint in `common/global_config.yaml` (`telemetry.endpoint`) and wire `record_event()` to POST events there when the endpoint is configured
+- [x] Add tests for telemetry integration (notice shown once, events recorded, opt-out respected)
 
 ## PyPI Packaging & Publishing
 
