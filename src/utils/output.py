@@ -58,7 +58,7 @@ def _render_table(data: Any, title: str = "") -> None:
         table = Table(title=title or None)
         columns = list(data[0].keys())
         for col in columns:
-            table.add_column(col, style="primary")
+            table.add_column(str(col), style="primary")
         for row in data:
             table.add_row(*(str(row.get(c, "")) for c in columns))
         console.print(table)

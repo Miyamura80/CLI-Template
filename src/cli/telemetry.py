@@ -6,11 +6,14 @@ import json
 import os
 import platform
 import socket
+import threading
+import urllib.request
 from datetime import UTC, datetime
 
 import typer
 from rich.console import Console
 
+from common import global_config
 from src.cli.state_store import _CONFIG_DIR, load_state, save_state
 
 app = typer.Typer(no_args_is_help=True)
@@ -30,6 +33,8 @@ def is_enabled() -> bool:
     """Check if telemetry is enabled."""
     if os.environ.get("CLI_TELEMETRY_DISABLED", "").strip() in ("1", "true", "yes"):
         return False
+    if not global_config.telemetry.enabled:
+        return False
     state = load_state()
     return state.get("telemetry_enabled", True)
 
@@ -39,12 +44,32 @@ def show_first_run_notice() -> None:
     state = load_state()
     if state.get("telemetry_notice_shown"):
         return
-    console.print(
-        "[dim]Anonymous usage telemetry is enabled. "
-        "Run 'mycli telemetry disable' or set CLI_TELEMETRY_DISABLED=1 to opt out.[/dim]"
-    )
+    if is_enabled():
+        console.print(
+            "[dim]Anonymous usage telemetry is enabled. "
+            "Run 'mycli telemetry disable' or set CLI_TELEMETRY_DISABLED=1 to opt out.[/dim]"
+        )
     state["telemetry_notice_shown"] = True
     save_state(state)
+
+
+def _post_event(endpoint: str, event: dict) -> None:
+    """POST a single event to the remote telemetry endpoint (fire-and-forget)."""
+
+    def _send() -> None:
+        try:
+            data = json.dumps(event).encode()
+            req = urllib.request.Request(
+                endpoint,
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=5)  # noqa: S310
+        except Exception:
+            pass  # telemetry must never break the CLI
+
+    threading.Thread(target=_send, daemon=True).start()
 
 
 def record_event(command: str, duration: float, success: bool) -> None:
@@ -78,6 +103,11 @@ def record_event(command: str, duration: float, success: bool) -> None:
         events = events[-_MAX_EVENTS:]
 
     _TELEMETRY_FILE.write_text(json.dumps(events, indent=2))
+
+    # POST to remote endpoint if configured
+    endpoint = global_config.telemetry.endpoint
+    if endpoint:
+        _post_event(endpoint, event)
 
 
 @app.command()
