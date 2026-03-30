@@ -16,7 +16,7 @@ class TestFirstRunNotice(TestTemplate):
     """show_first_run_notice() displays once then never again."""
 
     @patch("src.cli.telemetry.save_state")
-    @patch("src.cli.telemetry.load_state", return_value={})
+    @patch("src.cli.telemetry.load_state", side_effect=lambda: {})
     @patch("src.cli.telemetry.console")
     def test_notice_shown_on_first_run(self, mock_console, _load, mock_save):
         show_first_run_notice()
