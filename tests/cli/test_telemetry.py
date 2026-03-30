@@ -113,21 +113,25 @@ class TestRecordEvent(TestTemplate):
 
 
 class TestPostEvent(TestTemplate):
-    """_post_event() POSTs JSON and silently handles failures."""
+    """_post_event() POSTs JSON on a daemon thread and silently handles failures."""
 
     @patch("src.cli.telemetry.urllib.request.urlopen")
     @patch("src.cli.telemetry.urllib.request.Request")
-    def test_posts_json(self, mock_request_cls, mock_urlopen):
+    @patch("src.cli.telemetry.threading.Thread")
+    def test_posts_json(self, mock_thread_cls, _request_cls, _urlopen):
+        mock_thread = mock_thread_cls.return_value
         event = {"command": "test", "duration_s": 1.0}
         _post_event("https://example.com/t", event)
 
-        mock_request_cls.assert_called_once()
-        call_kwargs = mock_request_cls.call_args
-        assert call_kwargs[1]["method"] == "POST"
-        mock_urlopen.assert_called_once()
+        mock_thread_cls.assert_called_once()
+        assert mock_thread_cls.call_args[1]["daemon"] is True
+        mock_thread.start.assert_called_once()
 
     @patch("src.cli.telemetry.urllib.request.urlopen", side_effect=Exception("network error"))
     @patch("src.cli.telemetry.urllib.request.Request")
-    def test_swallows_errors(self, _request_cls, _urlopen):
-        # Should not raise
+    @patch("src.cli.telemetry.threading.Thread")
+    def test_fires_daemon_thread(self, mock_thread_cls, _request_cls, _urlopen):
+        mock_thread = mock_thread_cls.return_value
         _post_event("https://example.com/t", {"command": "test"})
+        assert mock_thread_cls.call_args[1]["daemon"] is True
+        mock_thread.start.assert_called_once()

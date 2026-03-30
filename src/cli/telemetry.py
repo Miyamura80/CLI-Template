@@ -6,6 +6,7 @@ import json
 import os
 import platform
 import socket
+import threading
 import urllib.request
 from datetime import UTC, datetime
 
@@ -54,17 +55,21 @@ def show_first_run_notice() -> None:
 
 def _post_event(endpoint: str, event: dict) -> None:
     """POST a single event to the remote telemetry endpoint (fire-and-forget)."""
-    try:
-        data = json.dumps(event).encode()
-        req = urllib.request.Request(
-            endpoint,
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        urllib.request.urlopen(req, timeout=5)  # noqa: S310
-    except Exception:
-        pass  # telemetry must never break the CLI
+
+    def _send() -> None:
+        try:
+            data = json.dumps(event).encode()
+            req = urllib.request.Request(
+                endpoint,
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=5)  # noqa: S310
+        except Exception:
+            pass  # telemetry must never break the CLI
+
+    threading.Thread(target=_send, daemon=True).start()
 
 
 def record_event(command: str, duration: float, success: bool) -> None:
