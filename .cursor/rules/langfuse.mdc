@@ -42,5 +42,5 @@ def function_name(...):
 **Key Changes from v3:**
 1. Replace `.generation()` / `.span()` with `start_observation(as_type=...)`.
 2. Use `TraceContext` dict for `trace_id` and `parent_span_id` instead of positional args.
-3. Split `.end(**kwargs)` into `.update(...)` + `.end()` — v4 `.end()` only accepts `end_time`.
+3. Split `.end(**kwargs)` into `.update(...)` + `.end()` since v4 `.end()` only accepts `end_time`.
 
