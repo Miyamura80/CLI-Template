@@ -11,7 +11,7 @@ As of Langfuse SDK v4.x, observation creation uses `start_observation()` with `a
 **Typical Usage:**
 
 ```python
-from langfuse import Langfuse, get_client
+from langfuse import Langfuse, get_client, observe
 from langfuse.types import TraceContext
 
 langfuse = Langfuse()
