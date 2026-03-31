@@ -32,7 +32,7 @@ dependencies = [
     "langfuse>=4.0.0",
     # litellm 1.82.7+ compromised via supply chain attack (credential-stealing malware)
     # See: https://github.com/BerriAI/litellm/issues/24512
-    "litellm>=1.59.8,<1.82.7",
+    "litellm>=1.59.8,<1.83.1",
     "tenacity>=9.0.0",
     "pillow>=12.1.0",
     "google-genai>=1.60.0",
