@@ -97,6 +97,9 @@ error-on-warning = true
 [tool.ty.environment]
 python-version = "3.12"
 
+[tool.ty.src]
+exclude = ["scripts/sync_agent_config.py"]
+
 [tool.deptry]
 ignore = ["DEP002"]
 
