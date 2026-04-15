@@ -1,5 +1,5 @@
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.12"
 # dependencies = ["pyyaml>=6.0", "tomli_w>=1.0"]
 # ///
 """Sync Claude <-> Codex skills and subagents.
@@ -65,7 +65,11 @@ def parse_md(path: Path) -> tuple[dict, str]:
     m = FRONTMATTER_RE.match(text)
     if not m:
         raise SystemExit(f"{path}: missing YAML frontmatter")
-    meta = yaml.safe_load(m.group(1)) or {}
+    meta = yaml.safe_load(m.group(1))
+    if meta is None:
+        meta = {}
+    if not isinstance(meta, dict):
+        raise SystemExit(f"{path}: frontmatter must be a YAML mapping")
     return meta, m.group(2).lstrip("\r\n")
 
 
