@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Super-opinionated Python stack for fast development. Python >= 3.12 required. Uses `uv` for dependency management (not pip).
+**Before any other work in this repo, enable prek:** `uv tool install prek && prek install`. Hooks are defined in `prek.toml`.
 
 ## Common Commands
 
@@ -132,6 +133,10 @@ Structure as: `init()` → `continue(id)` → `cleanup(id)`
 - Keep state serializable
 - Use descriptive IDs (runId, taskId)
 - Handle rate limits, timeouts, retries at system boundaries
+
+## Subagents
+
+- Folder-size CI failure → spawn subagent `.claude/agents/folder-refactor-advisor.md`.
 
 ## Git Workflow
 - **Protected Branch**: `main` is protected. Do not push directly to `main`. Use PRs.
