@@ -35,8 +35,22 @@ COLOR_PALETTES: list[tuple[str, str, str, str]] = [
 ]
 
 PRESET_EMOJIS: list[str] = [
-    "🚀", "⚡", "🔥", "🛠️", "🎯", "✨", "🌟", "💎",
-    "🦊", "🐉", "🌊", "🌿", "🔮", "🧪", "🎨", "🤖",
+    "🚀",
+    "⚡",
+    "🔥",
+    "🛠️",
+    "🎯",
+    "✨",
+    "🌟",
+    "💎",
+    "🦊",
+    "🐉",
+    "🌊",
+    "🌿",
+    "🔮",
+    "🧪",
+    "🎨",
+    "🤖",
 ]
 
 # ------------------------------------------------------------------------------
@@ -115,7 +129,9 @@ def _run_orchestrator() -> None:
     )
 
     total = len(STEPS)
-    results: dict[str, str] = {}  # label -> "completed" | "skipped" | "skipped (failed)"
+    results: dict[
+        str, str
+    ] = {}  # label -> "completed" | "skipped" | "skipped (failed)"
 
     idx = 0
     while idx < total:
@@ -199,15 +215,15 @@ def _save_cli_branding(emoji: str, primary_color: str, secondary_color: str) -> 
     """Persist emoji and colour settings into common/global_config.yaml."""
     config_path = PROJECT_ROOT / "common" / "global_config.yaml"
     text = config_path.read_text()
-    text = re.sub(r'^  emoji:.*$', f'  emoji: "{emoji}"', text, flags=re.MULTILINE)
+    text = re.sub(r"^  emoji:.*$", f'  emoji: "{emoji}"', text, flags=re.MULTILINE)
     text = re.sub(
-        r'^  primary_color:.*$',
+        r"^  primary_color:.*$",
         f'  primary_color: "{primary_color}"',
         text,
         flags=re.MULTILINE,
     )
     text = re.sub(
-        r'^  secondary_color:.*$',
+        r"^  secondary_color:.*$",
         f'  secondary_color: "{secondary_color}"',
         text,
         flags=re.MULTILINE,
@@ -322,10 +338,26 @@ def branding() -> None:
 
 
 _RENAME_EXTENSIONS = {
-    ".py", ".toml", ".md", ".mdx", ".yml", ".yaml",
-    ".json", ".tsx", ".ts", ".sh", ".txt",
+    ".py",
+    ".toml",
+    ".md",
+    ".mdx",
+    ".yml",
+    ".yaml",
+    ".json",
+    ".tsx",
+    ".ts",
+    ".sh",
+    ".txt",
 }
-_RENAME_SKIP_DIRS = {".venv", ".venv-test", ".git", "node_modules", "__pycache__", ".uv_cache"}
+_RENAME_SKIP_DIRS = {
+    ".venv",
+    ".venv-test",
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".uv_cache",
+}
 _RENAME_SKIP_FILES = {"uv.lock", "onboard.py"}
 
 
@@ -411,14 +443,20 @@ def _build_rename_replacements(
         pairs.append(("python-template", name))
 
     # GitHub owner/repo URLs
-    from_owner = current_owner if current_owner not in ("", "OWNER") else _TEMPLATE_OWNER
-    from_repo = current_repo if current_repo not in ("", "REPO") else _TEMPLATE_REPO_NAME
+    from_owner = (
+        current_owner if current_owner not in ("", "OWNER") else _TEMPLATE_OWNER
+    )
+    from_repo = (
+        current_repo if current_repo not in ("", "REPO") else _TEMPLATE_REPO_NAME
+    )
     pairs.append((f"{from_owner}/{from_repo}", f"{github_owner}/{github_repo}"))
     # URL-encoded form (used in badge URLs)
-    pairs.append((
-        f"{from_owner}%2F{from_repo}",
-        f"{github_owner}%2F{github_repo}",
-    ))
+    pairs.append(
+        (
+            f"{from_owner}%2F{from_repo}",
+            f"{github_owner}%2F{github_repo}",
+        )
+    )
 
     # Standalone repo directory name (e.g. in `cd CLI-Template`)
     # Skip if from_repo is a substring of github_repo to avoid double-substitution
@@ -456,7 +494,9 @@ def _prompt_github_info(
     if force_prompt or github_owner in ("OWNER", _TEMPLATE_OWNER):
         entered = questionary.text(
             "GitHub owner/org (e.g. my-github-username):",
-            default=github_owner if github_owner not in ("OWNER", _TEMPLATE_OWNER) else "",
+            default=github_owner
+            if github_owner not in ("OWNER", _TEMPLATE_OWNER)
+            else "",
             validate=_nonempty,
         ).ask()
         if entered is None:
@@ -466,7 +506,9 @@ def _prompt_github_info(
     if force_prompt or github_repo in ("REPO", _TEMPLATE_REPO_NAME):
         entered = questionary.text(
             "GitHub repository name:",
-            default=github_repo if github_repo not in ("REPO", _TEMPLATE_REPO_NAME) else "",
+            default=github_repo
+            if github_repo not in ("REPO", _TEMPLATE_REPO_NAME)
+            else "",
             validate=_nonempty,
         ).ask()
         if entered is None:
@@ -564,10 +606,18 @@ def rename() -> None:
     if description is None:
         raise typer.Abort()
 
-    github_owner, github_repo, raw_owner, raw_repo = _prompt_github_info(force_prompt=is_re_rename)
+    github_owner, github_repo, raw_owner, raw_repo = _prompt_github_info(
+        force_prompt=is_re_rename
+    )
     replacements = _build_rename_replacements(
-        name, description, github_owner, github_repo,
-        current_name, current_desc, raw_owner, raw_repo,
+        name,
+        description,
+        github_owner,
+        github_repo,
+        current_name,
+        current_desc,
+        raw_owner,
+        raw_repo,
     )
     changed_files = _replace_in_files(replacements)
     _update_pyproject_description(description, changed_files)
@@ -583,7 +633,11 @@ def rename() -> None:
     summary_lines.append(f"Updated [bold]{len(changed_files)}[/bold] file(s):")
     summary_lines.extend(f"  [green]{f}[/green]" for f in changed_files)
 
-    rprint(Panel("\n".join(summary_lines), title="✅ Rename Complete", border_style="green"))
+    rprint(
+        Panel(
+            "\n".join(summary_lines), title="✅ Rename Complete", border_style="green"
+        )
+    )
 
 
 def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
@@ -642,7 +696,11 @@ def _replace_cli_name(old_name: str, new_name: str) -> list[str]:
     regex_replacements: list[tuple[Path, str, str]] = [
         (PROJECT_ROOT / "README.md", rf"\b{re.escape(old_name)}\b", new_name),
         (PROJECT_ROOT / "release.md", rf"\b{re.escape(old_name)}\b", new_name),
-        (PROJECT_ROOT / ".claude" / "skills" / "usage" / "SKILL.md", rf"\b{re.escape(old_name)}\b", new_name),
+        (
+            PROJECT_ROOT / ".claude" / "skills" / "usage" / "SKILL.md",
+            rf"\b{re.escape(old_name)}\b",
+            new_name,
+        ),
     ]
 
     changes: list[str] = []

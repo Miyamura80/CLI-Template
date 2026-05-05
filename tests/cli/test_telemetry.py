@@ -29,14 +29,18 @@ class TestFirstRunNotice(TestTemplate):
     @patch("src.cli.telemetry.load_state", side_effect=lambda: {})
     @patch("src.cli.telemetry.is_enabled", return_value=False)
     @patch("src.cli.telemetry.console")
-    def test_notice_not_shown_when_disabled(self, mock_console, _enabled, _load, mock_save):
+    def test_notice_not_shown_when_disabled(
+        self, mock_console, _enabled, _load, mock_save
+    ):
         show_first_run_notice()
         mock_console.print.assert_not_called()
         # Still marks as shown so we don't re-check every run
         mock_save.assert_called_once()
 
     @patch("src.cli.telemetry.save_state")
-    @patch("src.cli.telemetry.load_state", return_value={"telemetry_notice_shown": True})
+    @patch(
+        "src.cli.telemetry.load_state", return_value={"telemetry_notice_shown": True}
+    )
     @patch("src.cli.telemetry.console")
     def test_notice_not_shown_again(self, mock_console, _load, mock_save):
         show_first_run_notice()
@@ -100,9 +104,13 @@ class TestRecordEvent(TestTemplate):
     @patch("src.cli.telemetry.is_enabled", return_value=True)
     @patch("src.cli.telemetry._TELEMETRY_FILE")
     @patch("src.cli.telemetry._CONFIG_DIR")
-    def test_posts_when_endpoint_configured(self, _dir, mock_file, _enabled, mock_gc, mock_post):
+    def test_posts_when_endpoint_configured(
+        self, _dir, mock_file, _enabled, mock_gc, mock_post
+    ):
         mock_file.configure_mock(**{"exists.return_value": False})
-        mock_gc.configure_mock(**{"telemetry.endpoint": "https://example.com/telemetry"})
+        mock_gc.configure_mock(
+            **{"telemetry.endpoint": "https://example.com/telemetry"}
+        )
 
         record_event("deploy", 2.1, False)
 
@@ -127,7 +135,10 @@ class TestPostEvent(TestTemplate):
         assert mock_thread_cls.call_args[1]["daemon"] is True
         mock_thread.start.assert_called_once()
 
-    @patch("src.cli.telemetry.urllib.request.urlopen", side_effect=Exception("network error"))
+    @patch(
+        "src.cli.telemetry.urllib.request.urlopen",
+        side_effect=Exception("network error"),
+    )
     @patch("src.cli.telemetry.urllib.request.Request")
     @patch("src.cli.telemetry.threading.Thread")
     def test_fires_daemon_thread(self, mock_thread_cls, _request_cls, _urlopen):

@@ -25,7 +25,10 @@ class TestOnboard(TestTemplate):
         changed_files: list[str] = []
         onboard._update_pyproject_description('My "awesome" tool', changed_files)
 
-        assert pyproject.read_text() == 'name = "my-tool"\ndescription = "My \\"awesome\\" tool"\n'
+        assert (
+            pyproject.read_text()
+            == 'name = "my-tool"\ndescription = "My \\"awesome\\" tool"\n'
+        )
         assert changed_files == ["pyproject.toml"]
 
     def test_update_pyproject_description_preserves_backslash_sequences(
@@ -36,14 +39,20 @@ class TestOnboard(TestTemplate):
         monkeypatch.setattr(onboard, "PROJECT_ROOT", tmp_path)
 
         changed_files: list[str] = []
-        onboard._update_pyproject_description(r'path\1 tool', changed_files)
+        onboard._update_pyproject_description(r"path\1 tool", changed_files)
 
-        assert pyproject.read_text() == 'name = "my-tool"\ndescription = "path\\1 tool"\n'
+        assert (
+            pyproject.read_text() == 'name = "my-tool"\ndescription = "path\\1 tool"\n'
+        )
         assert changed_files == ["pyproject.toml"]
 
-    def test_read_pyproject_description_handles_escaped_quotes(self, tmp_path, monkeypatch):
+    def test_read_pyproject_description_handles_escaped_quotes(
+        self, tmp_path, monkeypatch
+    ):
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text('name = "my-tool"\n[project]\ndescription = "My \\"awesome\\" tool"\n')
+        pyproject.write_text(
+            'name = "my-tool"\n[project]\ndescription = "My \\"awesome\\" tool"\n'
+        )
         monkeypatch.setattr(onboard, "PROJECT_ROOT", tmp_path)
 
         assert onboard._read_pyproject_description() == 'My "awesome" tool'
