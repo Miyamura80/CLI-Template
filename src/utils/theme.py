@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import yaml
+from loguru import logger as log
 from rich.console import Console
 from rich.theme import Theme
 
@@ -15,7 +16,8 @@ def _load_cli_config() -> dict[str, object]:
         config_path = _ROOT / "common" / "global_config.yaml"
         data = yaml.safe_load(config_path.read_text()) or {}
         return data.get("cli", {})
-    except Exception:  # noqa: BLE001  # config is optional; any read/parse error falls back to empty
+    except Exception as exc:  # noqa: BLE001  # config is optional; any read/parse error falls back to empty
+        log.debug(f"could not load cli section of global_config.yaml: {exc!r}")
         return {}
 
 

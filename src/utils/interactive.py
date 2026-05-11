@@ -7,6 +7,7 @@ from functools import wraps
 from typing import Any, get_type_hints
 
 import questionary
+from loguru import logger as log
 
 
 def _resolve_hint(hint: Any) -> Any:
@@ -45,7 +46,8 @@ def interactive_fallback(func: Any) -> Any:
         sig = inspect.signature(func)
         try:
             hints = get_type_hints(func)
-        except Exception:  # noqa: BLE001  # get_type_hints can raise many things (NameError, etc); hints are optional
+        except Exception as exc:  # noqa: BLE001  # get_type_hints can raise many things (NameError, etc); hints are optional
+            log.debug(f"get_type_hints({func.__qualname__}) failed: {exc!r}")
             hints = {}
 
         bound = sig.bind_partial(*args, **kwargs)
