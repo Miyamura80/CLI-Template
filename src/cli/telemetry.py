@@ -66,8 +66,8 @@ def _post_event(endpoint: str, event: dict) -> None:
                 method="POST",
             )
             urllib.request.urlopen(req, timeout=5)  # noqa: S310
-        except Exception:
-            pass  # telemetry must never break the CLI
+        except Exception:  # noqa: BLE001  # telemetry must never break the CLI
+            pass
 
     threading.Thread(target=_send, daemon=True).start()
 

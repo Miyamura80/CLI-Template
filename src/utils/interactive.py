@@ -45,7 +45,7 @@ def interactive_fallback(func: Any) -> Any:
         sig = inspect.signature(func)
         try:
             hints = get_type_hints(func)
-        except Exception:
+        except Exception:  # noqa: BLE001  # get_type_hints can raise many things (NameError, etc); hints are optional
             hints = {}
 
         bound = sig.bind_partial(*args, **kwargs)

@@ -195,7 +195,7 @@ def main_cli() -> None:
     except SystemExit as exc:
         success = exc.code in (None, 0)
         raise
-    except Exception:
+    except Exception:  # noqa: BLE001  # top-level CLI handler records failure then re-raises
         success = False
         raise
     finally:
@@ -204,5 +204,5 @@ def main_cli() -> None:
             from src.cli.telemetry import record_event
 
             record_event(command=command_name, duration=duration, success=success)
-        except Exception:
-            pass  # telemetry must never break the CLI
+        except Exception:  # noqa: BLE001  # telemetry must never break the CLI
+            pass

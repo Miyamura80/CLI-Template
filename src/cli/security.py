@@ -65,7 +65,7 @@ def _fetch_snyk_score(package: str) -> float | None:
                 digits = "".join(c for c in raw if c.isdigit())
                 if digits:
                     return int(digits) / 100
-    except Exception:
+    except Exception:  # noqa: BLE001  # best-effort badge scrape; any failure means "score unknown"
         pass
     return None
 

@@ -105,7 +105,7 @@ def _check_config_parseable() -> CheckResult:
             status=CheckStatus.PASS,
             message="global_config loaded successfully",
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  # doctor check reports any config load failure to the user
         return CheckResult(
             name="Config parseable",
             status=CheckStatus.FAIL,
