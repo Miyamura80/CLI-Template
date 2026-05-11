@@ -7,6 +7,7 @@ from enum import StrEnum
 from typing import Annotated
 
 import typer
+from loguru import logger as log
 
 from src.cli.state import (
     OutputFormat,
@@ -204,5 +205,5 @@ def main_cli() -> None:
             from src.cli.telemetry import record_event
 
             record_event(command=command_name, duration=duration, success=success)
-        except Exception:  # noqa: BLE001  # telemetry must never break the CLI
-            pass
+        except Exception as exc:  # noqa: BLE001  # telemetry must never break the CLI
+            log.debug(f"telemetry record_event failed: {exc!r}")
