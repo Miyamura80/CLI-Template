@@ -11,6 +11,7 @@ import urllib.request
 from datetime import UTC, datetime
 
 import typer
+from loguru import logger as log
 from rich.console import Console
 
 from common import global_config
@@ -66,8 +67,8 @@ def _post_event(endpoint: str, event: dict) -> None:
                 method="POST",
             )
             urllib.request.urlopen(req, timeout=5)  # noqa: S310
-        except Exception:
-            pass  # telemetry must never break the CLI
+        except Exception as exc:  # noqa: BLE001  # telemetry must never break the CLI
+            log.debug(f"telemetry POST to {endpoint} failed: {exc!r}")
 
     threading.Thread(target=_send, daemon=True).start()
 

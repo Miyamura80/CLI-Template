@@ -4,6 +4,7 @@ import importlib.metadata
 import re
 import urllib.request
 
+from loguru import logger as log
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -65,8 +66,8 @@ def _fetch_snyk_score(package: str) -> float | None:
                 digits = "".join(c for c in raw if c.isdigit())
                 if digits:
                     return int(digits) / 100
-    except Exception:
-        pass
+    except Exception as exc:  # noqa: BLE001  # best-effort badge scrape; any failure means "score unknown"
+        log.debug(f"security badge scrape failed: {exc!r}")
     return None
 
 
