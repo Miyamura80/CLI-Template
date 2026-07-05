@@ -269,6 +269,31 @@ class TestSecrets(TestTemplate):
         assert "*" in masked
         assert len(masked) == len("my_long_secret_value")
 
+    def test_set_dry_run_escapes_markup_in_key(self):
+        # A bracket-laden key must not raise a MarkupError from the dry-run print.
+        fake = FakeKeyring()
+        with ExitStack() as stack:
+            _apply_patches(stack, fake)
+            result = runner.invoke(app, ["--dry-run", "secrets", "set", "[/]", "v"])
+            assert result.exit_code == 0
+            assert "DRY RUN" in result.output
+
+    def test_get_not_found_escapes_markup_in_key(self):
+        fake = FakeKeyring()
+        with ExitStack() as stack:
+            _apply_patches(stack, fake)
+            result = runner.invoke(app, ["secrets", "get", "[/]"])
+            assert result.exit_code == 1
+            assert "not found" in result.output  # printed only if nothing crashed
+
+    def test_delete_no_op_escapes_markup_in_key(self):
+        fake = FakeKeyring()
+        with ExitStack() as stack:
+            _apply_patches(stack, fake)
+            result = runner.invoke(app, ["secrets", "delete", "[/]"])
+            assert result.exit_code == 0
+            assert "No-op" in result.output
+
     def test_import_secrets(self, tmp_path):
         fake = FakeKeyring()
         env_file = tmp_path / ".env"

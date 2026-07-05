@@ -4,6 +4,7 @@ import sys
 from types import TracebackType
 
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.traceback import Traceback
 
@@ -22,7 +23,7 @@ def _friendly_handler(
         return
     console.print(
         Panel(
-            f"[bold red]{exc_type.__name__}[/bold red]: {exc_value}",
+            f"[bold red]{exc_type.__name__}[/bold red]: {escape(str(exc_value))}",
             title="Error",
             subtitle="Use --debug for full traceback",
             border_style="red",

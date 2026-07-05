@@ -44,6 +44,14 @@ class TestDoctor(TestTemplate):
         result = runner.invoke(app, ["doctor", "--fix"])
         assert result.exit_code in (0, 1)
 
+    def test_doctor_dry_run_fix_does_not_run_fixers(self):
+        # --dry-run doctor --fix must preview only, never invoke the real
+        # (filesystem/subprocess-mutating) fixers.
+        with patch("commands.doctor._attempt_fixes") as attempt:
+            result = runner.invoke(app, ["--dry-run", "doctor", "--fix"])
+            assert attempt.call_count == 0
+        assert result.exit_code in (0, 1)  # depends on ambient env health
+
     def test_check_python_version(self):
         result = _check_python_version()
         assert isinstance(result, CheckResult)

@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 import yaml
 from rich.console import Console
+from rich.markup import escape
 
 from src.cli.state import is_dry_run
 from src.utils.cli_help import examples_epilog
@@ -60,11 +61,15 @@ def get(
                 try:
                     obj = obj[part]
                 except KeyError:
-                    console.print(f"[red]Error:[/red] config key not found: {key}")
-                    console.print("  List available keys: [bold]mycli config show[/bold]")
+                    console.print(
+                        f"[red]Error:[/red] config key not found: {escape(key)}"
+                    )
+                    console.print(
+                        "  List available keys: [bold]mycli config show[/bold]"
+                    )
                     raise typer.Exit(code=1) from None
             else:
-                console.print(f"[red]Error:[/red] config key not found: {key}")
+                console.print(f"[red]Error:[/red] config key not found: {escape(key)}")
                 console.print("  List available keys: [bold]mycli config show[/bold]")
                 raise typer.Exit(code=1) from None
 
@@ -106,7 +111,9 @@ def set_value(
         raise typer.Exit(code=1)
 
     if is_dry_run():
-        console.print(f"[yellow][DRY RUN][/yellow] Would set {key} = {value!r}")
+        console.print(
+            f"[yellow][DRY RUN][/yellow] Would set {escape(key)} = {escape(repr(value))}"
+        )
         return
 
     override_path = _ROOT_DIR / ".global_config.yaml"
@@ -132,7 +139,9 @@ def set_value(
     with open(override_path, "w") as f:
         yaml.safe_dump(existing, f, default_flow_style=False)
 
-    console.print(f"[green]Set[/green] {key} = {coerced!r} in .global_config.yaml")
+    console.print(
+        f"[green]Set[/green] {escape(key)} = {escape(repr(coerced))} in .global_config.yaml"
+    )
 
 
 def _coerce_value(value: str):

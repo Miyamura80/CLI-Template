@@ -10,6 +10,7 @@ import keyring
 import keyring.errors
 import typer
 from rich.console import Console
+from rich.markup import escape
 
 from src.cli.state import is_dry_run, is_quiet
 from src.utils.cli_help import examples_epilog
@@ -96,22 +97,23 @@ def set_secret(
         if sys.stdin.isatty():
             value = typer.prompt(f"Enter value for {key}", hide_input=True)
         else:
+            safe_key = escape(key)
             console.print("[red]Error:[/red] no secret value specified.")
             console.print(
-                f"  mycli secrets set {key} <value>   |   "
-                f"echo <value> | mycli secrets set {key} --stdin"
+                f"  mycli secrets set {safe_key} <value>   |   "
+                f"echo <value> | mycli secrets set {safe_key} --stdin"
             )
             raise typer.Exit(code=1)
 
     if is_dry_run():
-        console.print(f"[yellow][DRY RUN][/yellow] Would store secret {key}")
+        console.print(f"[yellow][DRY RUN][/yellow] Would store secret {escape(key)}")
         return
 
     keyring.set_password(_SERVICE_NAME, key, value)
     _track_key(key)
 
     if not is_quiet():
-        console.print(f"[green]Stored[/green] {key}")
+        console.print(f"[green]Stored[/green] {escape(key)}")
 
 
 @app.command(
@@ -131,7 +133,7 @@ def get_secret(
     """Retrieve a secret from the OS keyring."""
     value = keyring.get_password(_SERVICE_NAME, key)
     if value is None:
-        console.print(f"[red]Error:[/red] secret not found: {key}")
+        console.print(f"[red]Error:[/red] secret not found: {escape(key)}")
         console.print("  List stored secrets: [bold]mycli secrets list[/bold]")
         raise typer.Exit(code=1)
 
@@ -150,7 +152,7 @@ def delete(
 ) -> None:
     """Remove a secret from the OS keyring (no-op if absent)."""
     if is_dry_run():
-        console.print(f"[yellow][DRY RUN][/yellow] Would delete secret {key}")
+        console.print(f"[yellow][DRY RUN][/yellow] Would delete secret {escape(key)}")
         return
 
     try:
@@ -163,13 +165,13 @@ def delete(
             raise
         _untrack_key(key)
         if not is_quiet():
-            console.print(f"[dim]No-op:[/dim] {key} not present")
+            console.print(f"[dim]No-op:[/dim] {escape(key)} not present")
         return
 
     _untrack_key(key)
 
     if not is_quiet():
-        console.print(f"[green]Deleted[/green] {key}")
+        console.print(f"[green]Deleted[/green] {escape(key)}")
 
 
 @app.command("list", epilog=examples_epilog("mycli --format json secrets list"))
@@ -247,7 +249,7 @@ def import_secrets(
         file, use_stdin=use_stdin, interactive=interactive
     )
     if not values:
-        console.print(f"[yellow]No values found in {source}[/yellow]")
+        console.print(f"[yellow]No values found in {escape(source)}[/yellow]")
         return
 
     dry = is_dry_run()

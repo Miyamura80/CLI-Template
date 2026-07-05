@@ -12,7 +12,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
-from src.cli.state import is_quiet, is_verbose
+from src.cli.state import is_dry_run, is_quiet, is_verbose
 from src.utils.cli_help import examples_epilog
 from src.utils.output import render
 
@@ -315,13 +315,32 @@ def main(
         results.append(result)
 
     if fix:
-        results = _attempt_fixes(results)
+        if is_dry_run():
+            _preview_fixes(results)
+        else:
+            results = _attempt_fixes(results)
 
     has_failures = any(r.status == CheckStatus.FAIL for r in results)
     _render_results(results, has_failures)
 
     if has_failures:
         raise typer.Exit(code=1)
+
+
+def _preview_fixes(results: list[CheckResult]) -> None:
+    """Report which fixable checks --fix would act on, without mutating anything."""
+    if is_quiet():
+        return
+    fixable = [
+        r
+        for r in results
+        if r.status != CheckStatus.PASS and r.fixable and r.name in _FIXERS
+    ]
+    if not fixable:
+        console.print("[yellow][DRY RUN][/yellow] Nothing to fix")
+        return
+    for r in fixable:
+        console.print(f"[yellow][DRY RUN][/yellow] Would fix: {r.name}")
 
 
 def _attempt_fixes(results: list[CheckResult]) -> list[CheckResult]:

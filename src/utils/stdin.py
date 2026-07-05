@@ -18,9 +18,14 @@ def read_stdin() -> str | None:
     - Fails fast (exit 2) on an interactive terminal: stdin was requested but
       nothing is piped, so a blocking read would hang the caller - the opposite
       of agent-friendly.
-    - Strips a trailing line terminator, handling both ``\\n`` and ``\\r\\n``.
+    - Strips only the *single* trailing line terminator (``\\n`` or ``\\r\\n``)
+      that a shell/editor commonly appends. Interior newlines and any further
+      trailing newlines are preserved, so a value whose trailing newline is
+      significant is not silently truncated beyond that one terminator.
     - Returns ``None`` for empty input so callers treat "nothing piped" as a
-      missing value and hit their fail-fast path.
+      missing value and hit their fail-fast path (an empty pipe is far more
+      often a broken upstream command than a deliberate empty value; use a
+      positional ``""`` to store an explicit empty string).
     """
     if sys.stdin.isatty():
         _console.print(
@@ -28,7 +33,11 @@ def read_stdin() -> str | None:
             "pipe a value in, e.g. echo <value> | ..."
         )
         raise typer.Exit(code=2)
-    data = sys.stdin.read().rstrip("\r\n")
+    data = sys.stdin.read()
+    if data.endswith("\r\n"):
+        data = data[:-2]
+    elif data.endswith("\n"):
+        data = data[:-1]
     return data or None
 
 
@@ -37,7 +46,8 @@ def resolve_value(value: str | None, *, use_stdin: bool = False) -> str | None:
 
     Reads stdin when ``use_stdin`` is True or when ``value`` is the sentinel
     ``-``. Otherwise returns ``value`` unchanged. Empty piped input resolves to
-    ``None`` (a missing value), not an empty string.
+    ``None`` (a missing value), not an empty string, so callers fail fast rather
+    than storing an empty value from an accidentally-empty pipe.
     """
     if use_stdin or value == "-":
         return read_stdin()

@@ -3,11 +3,15 @@
 from typing import Annotated
 
 import typer
+from rich.console import Console
+from rich.markup import escape
 
 from src.cli.state import is_dry_run, is_verbose
 from src.utils.cli_help import examples_epilog
 from src.utils.interactive import interactive_fallback
 from src.utils.output import render
+
+console = Console(stderr=True)
 
 EPILOG = examples_epilog(
     "mycli greet Ada",
@@ -32,7 +36,7 @@ def main(
 ) -> None:
     """Greet someone by name."""
     if is_dry_run():
-        typer.echo(f"[DRY RUN] Would greet {name}")
+        console.print(f"[yellow][DRY RUN][/yellow] Would greet {escape(str(name))}")
         return
 
     greeting = f"Hello, {name}!"

@@ -37,13 +37,24 @@ class TestResolveValue(TestTemplate):
         assert resolve_value("-") == "piped"
 
     def test_empty_stdin_resolves_to_none(self, monkeypatch):
-        # Empty pipe must be treated as "missing", not an empty string.
+        # Empty pipe must be treated as "missing", not an empty string, so the
+        # caller fails fast instead of storing an empty value from a broken pipe.
         monkeypatch.setattr(sys, "stdin", _FakeStdin(""))
         assert resolve_value(None, use_stdin=True) is None
 
     def test_crlf_terminator_stripped(self, monkeypatch):
         monkeypatch.setattr(sys, "stdin", _FakeStdin("val\r\n"))
         assert resolve_value(None, use_stdin=True) == "val"
+
+    def test_only_single_trailing_newline_stripped(self, monkeypatch):
+        # A significant trailing newline beyond the one terminator is preserved
+        # (str.rstrip("\r\n") would have eaten all of them - that was the bug).
+        monkeypatch.setattr(sys, "stdin", _FakeStdin("val\n\n"))
+        assert resolve_value(None, use_stdin=True) == "val\n"
+
+    def test_interior_newlines_preserved(self, monkeypatch):
+        monkeypatch.setattr(sys, "stdin", _FakeStdin("line1\nline2\n"))
+        assert resolve_value(None, use_stdin=True) == "line1\nline2"
 
     def test_stdin_overrides_positional_value(self, monkeypatch):
         # When --stdin is set, the piped value wins over any positional.

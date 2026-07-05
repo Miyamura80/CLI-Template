@@ -121,3 +121,27 @@ class TestCLI(TestTemplate):
     def test_completions_show(self):
         result = runner.invoke(app, ["completions", "show", "bash"])
         assert result.exit_code == 0
+
+    def test_config_set_dry_run_escapes_markup(self):
+        # Rich markup in a user-supplied key must not crash the command.
+        result = runner.invoke(app, ["--dry-run", "config", "set", "[/]", "x"])
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+        assert "[/]" in result.output  # rendered literally, not parsed as a tag
+
+    def test_config_set_dry_run_escapes_markup_in_value(self):
+        result = runner.invoke(app, ["--dry-run", "config", "set", "some.key", "[/]"])
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+
+    def test_config_get_missing_key_with_markup_no_crash(self):
+        # A bracket-laden key hits the not-found path cleanly (exit 1), not a
+        # MarkupError. The "not found" message only prints if nothing crashed.
+        result = runner.invoke(app, ["config", "get", "[/]"])
+        assert result.exit_code == 1
+        assert "not found" in result.output
+
+    def test_greet_dry_run_escapes_markup(self):
+        result = runner.invoke(app, ["--dry-run", "greet", "[/]"])
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
