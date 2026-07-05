@@ -6,8 +6,12 @@ from typing import Annotated
 import typer
 import yaml
 from rich.console import Console
+from rich.markup import escape
 
+from src.cli.state import is_dry_run
+from src.utils.cli_help import examples_epilog
 from src.utils.output import render
+from src.utils.stdin import resolve_value
 
 app = typer.Typer(no_args_is_help=True)
 console = Console(stderr=True)
@@ -22,14 +26,24 @@ def _load_config():
     return global_config
 
 
-@app.command()
+@app.command(
+    epilog=examples_epilog(
+        "mycli config show",
+        "mycli --format json config show",
+    )
+)
 def show() -> None:
     """Show the full configuration."""
     cfg = _load_config()
     render(cfg.to_dict(), title="Configuration")
 
 
-@app.command()
+@app.command(
+    epilog=examples_epilog(
+        "mycli config get llm_config.default_model",
+        "mycli --format json config get llm_config.cache_enabled",
+    )
+)
 def get(
     key: Annotated[
         str,
@@ -47,10 +61,16 @@ def get(
                 try:
                     obj = obj[part]
                 except KeyError:
-                    console.print(f"[red]Key not found:[/red] {key}")
+                    console.print(
+                        f"[red]Error:[/red] config key not found: {escape(key)}"
+                    )
+                    console.print(
+                        "  List available keys: [bold]mycli config show[/bold]"
+                    )
                     raise typer.Exit(code=1) from None
             else:
-                console.print(f"[red]Key not found:[/red] {key}")
+                console.print(f"[red]Error:[/red] config key not found: {escape(key)}")
+                console.print("  List available keys: [bold]mycli config show[/bold]")
                 raise typer.Exit(code=1) from None
 
     if hasattr(obj, "model_dump"):
@@ -61,12 +81,44 @@ def get(
         typer.echo(obj)
 
 
-@app.command("set")
+@app.command(
+    "set",
+    epilog=examples_epilog(
+        "mycli config set llm_config.cache_enabled true",
+        "echo true | mycli config set llm_config.cache_enabled --stdin",
+        "mycli --dry-run config set llm_config.default_model gpt-4o",
+    ),
+)
 def set_value(
     key: Annotated[str, typer.Argument(help="Dot-separated config key to set.")],
-    value: Annotated[str, typer.Argument(help="Value to set.")],
+    value: Annotated[
+        str | None,
+        typer.Argument(help="Value to set. Use '-' or --stdin to read from stdin."),
+    ] = None,
+    use_stdin: Annotated[
+        bool,
+        typer.Option("--stdin", help="Read the value from stdin."),
+    ] = False,
 ) -> None:
     """Set a configuration override (writes to .global_config.yaml)."""
+    value = resolve_value(value, use_stdin=use_stdin)
+    if value is None:
+        console.print("[red]Error:[/red] no value specified.")
+        console.print(
+            "  mycli config set <key> <value>   |   "
+            "echo <value> | mycli config set <key> --stdin"
+        )
+        raise typer.Exit(code=1)
+
+    if is_dry_run():
+        # Preview the coerced value the real write would store, not the raw
+        # string, so the dry-run matches the actual mutation.
+        console.print(
+            "[yellow][DRY RUN][/yellow] Would set "
+            f"{escape(key)} = {escape(repr(_coerce_value(value)))}"
+        )
+        return
+
     override_path = _ROOT_DIR / ".global_config.yaml"
 
     # Load existing overrides
@@ -90,7 +142,9 @@ def set_value(
     with open(override_path, "w") as f:
         yaml.safe_dump(existing, f, default_flow_style=False)
 
-    console.print(f"[green]Set[/green] {key} = {coerced!r} in .global_config.yaml")
+    console.print(
+        f"[green]Set[/green] {escape(key)} = {escape(repr(coerced))} in .global_config.yaml"
+    )
 
 
 def _coerce_value(value: str):

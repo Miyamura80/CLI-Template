@@ -54,6 +54,58 @@ class TestCLI(TestTemplate):
     def test_config_get_nonexistent(self):
         result = runner.invoke(app, ["config", "get", "nonexistent.key"])
         assert result.exit_code == 1
+        # Actionable error points at the discovery command.
+        assert "config show" in result.output
+
+    def test_config_set_dry_run(self):
+        result = runner.invoke(
+            app,
+            ["--dry-run", "config", "set", "llm_config.cache_enabled", "true"],
+        )
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+
+    def test_config_set_via_stdin_dry_run(self):
+        result = runner.invoke(
+            app,
+            ["--dry-run", "config", "set", "llm_config.cache_enabled", "--stdin"],
+            input="true\n",
+        )
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+
+    def test_config_set_missing_value_errors(self):
+        result = runner.invoke(app, ["config", "set", "some.key"], input="")
+        assert result.exit_code == 1
+        assert "no value" in result.output
+
+    def test_config_set_via_dash_sentinel_dry_run(self):
+        result = runner.invoke(
+            app,
+            ["--dry-run", "config", "set", "llm_config.cache_enabled", "-"],
+            input="true\n",
+        )
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+        # Preview shows the coerced value that the real write would store.
+        assert "True" in result.output
+
+    def test_help_shows_examples(self):
+        for cmd in (["greet"], ["doctor"], ["config", "set"], ["secrets", "set"]):
+            result = runner.invoke(app, [*cmd, "--help"])
+            assert result.exit_code == 0
+            assert "Examples:" in result.output
+
+    def test_help_examples_use_correct_flag_ordering(self):
+        # Global flags (--dry-run/--format) must precede the subcommand, or the
+        # example fails with exit 2. Assert on the EPILOG source strings rather
+        # than rendered --help output, which word-wraps at the terminal width.
+        from commands import doctor, greet  # noqa: PLC0415
+
+        assert "mycli --dry-run greet" in greet.EPILOG
+        assert "mycli greet Ada --dry-run" not in greet.EPILOG
+        assert "mycli --format json doctor" in doctor.EPILOG
+        assert "mycli doctor --format json" not in doctor.EPILOG
 
     def test_format_json(self):
         result = runner.invoke(app, ["--format", "json", "config", "show"])
@@ -70,3 +122,27 @@ class TestCLI(TestTemplate):
     def test_completions_show(self):
         result = runner.invoke(app, ["completions", "show", "bash"])
         assert result.exit_code == 0
+
+    def test_config_set_dry_run_escapes_markup(self):
+        # Rich markup in a user-supplied key must not crash the command.
+        result = runner.invoke(app, ["--dry-run", "config", "set", "[/]", "x"])
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+        assert "[/]" in result.output  # rendered literally, not parsed as a tag
+
+    def test_config_set_dry_run_escapes_markup_in_value(self):
+        result = runner.invoke(app, ["--dry-run", "config", "set", "some.key", "[/]"])
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
+
+    def test_config_get_missing_key_with_markup_no_crash(self):
+        # A bracket-laden key hits the not-found path cleanly (exit 1), not a
+        # MarkupError. The "not found" message only prints if nothing crashed.
+        result = runner.invoke(app, ["config", "get", "[/]"])
+        assert result.exit_code == 1
+        assert "not found" in result.output
+
+    def test_greet_dry_run_escapes_markup(self):
+        result = runner.invoke(app, ["--dry-run", "greet", "[/]"])
+        assert result.exit_code == 0
+        assert "DRY RUN" in result.output
