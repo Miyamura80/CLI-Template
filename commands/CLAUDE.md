@@ -75,9 +75,13 @@ mutations).
 
 ```python
 if is_dry_run():
-    console.print(f"[yellow][DRY RUN][/yellow] Would <action> {target}")
+    console.print(f"[yellow][DRY RUN][/yellow] Would <action> {escape(target)}")
     return
 ```
+
+Wrap every user-controlled value you interpolate into a `console.print` markup
+string in `rich.markup.escape()` - a `[` or `]` in the data raises `MarkupError`
+and crashes the command otherwise.
 
 ### 5. Idempotent where retries are plausible
 Agents retry. A delete of an absent thing should be a no-op success (exit 0),
@@ -87,7 +91,7 @@ not an error. A repeated create/set should converge, not duplicate.
 On failure, name the fix or the discovery command. Exit non-zero.
 
 ```python
-console.print(f"[red]Error:[/red] secret not found: {key}")
+console.print(f"[red]Error:[/red] secret not found: {escape(key)}")
 console.print("  List stored secrets: [bold]mycli secrets list[/bold]")
 raise typer.Exit(code=1)
 ```

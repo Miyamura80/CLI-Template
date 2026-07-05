@@ -111,8 +111,11 @@ def set_value(
         raise typer.Exit(code=1)
 
     if is_dry_run():
+        # Preview the coerced value the real write would store, not the raw
+        # string, so the dry-run matches the actual mutation.
         console.print(
-            f"[yellow][DRY RUN][/yellow] Would set {escape(key)} = {escape(repr(value))}"
+            "[yellow][DRY RUN][/yellow] Would set "
+            f"{escape(key)} = {escape(repr(_coerce_value(value)))}"
         )
         return
 

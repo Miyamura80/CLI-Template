@@ -87,7 +87,8 @@ class TestCLI(TestTemplate):
         )
         assert result.exit_code == 0
         assert "DRY RUN" in result.output
-        assert "true" in result.output
+        # Preview shows the coerced value that the real write would store.
+        assert "True" in result.output
 
     def test_help_shows_examples(self):
         for cmd in (["greet"], ["doctor"], ["config", "set"], ["secrets", "set"]):
