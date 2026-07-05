@@ -251,13 +251,15 @@ def _git_scoped_files() -> list[str] | None:
                 "--exclude-standard",
             ],
             capture_output=True,
-            text=True,
         )
     except OSError:
         return None
     if result.returncode != 0:
         return None
-    return [p for p in result.stdout.split("\0") if p]
+    # Decode with os.fsdecode (surrogateescape) rather than text=True so paths
+    # with non-UTF-8 bytes round-trip back through filesystem calls instead of
+    # crashing on a strict-UTF-8 decode.
+    return [os.fsdecode(p) for p in result.stdout.split(b"\0") if p]
 
 
 def _mirror_candidates() -> tuple[set[Path], set[Path]]:
