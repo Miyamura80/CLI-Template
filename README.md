@@ -65,7 +65,6 @@ Opinionated Python CLI template for fast development. The `saas` branch extends 
 | SQLAlchemy + Alembic | ❌ | ✅ |
 | Auth (WorkOS + API keys) | ❌ | ✅ |
 | Payments (Stripe) | ❌ | ✅ |
-| Ralph Wiggum Agent Loop | ✅ | ✅ |
 
 [Full comparison](manual_docs/branch_comparison.md)
 
