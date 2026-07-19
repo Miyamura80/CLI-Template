@@ -58,7 +58,7 @@ which files it touches and which template sentinels it replaces.
      before verifying the CLI.
    - `rename` and `cli_name` are string replacements across tracked files;
      re-running is safe (they detect the current values and offer to re-rename).
-   - `media` is skipped automatically when `GEMINI_API_KEY` is absent, don't
+   - `media` is skipped automatically when `GEMINI_API_KEY` is absent; don't
      force it.
 
 5. Verify the resulting project:
@@ -68,7 +68,7 @@ which files it touches and which template sentinels it replaces.
      large.
 
 6. Prune unused systems, only after the user confirms each one. These are NOT
-   automated, remove deliberately:
+   automated; remove deliberately:
    - Docs site: delete `docs/` and its lint/link/translation workflows
      (`docs-lint.yaml`, `jules-sync-translations.yml`, `markdown-link-lint.yaml`
      as appropriate).
