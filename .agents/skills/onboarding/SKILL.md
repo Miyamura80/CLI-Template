@@ -19,7 +19,7 @@ which files it touches and which template sentinels it replaces.
 
 1. Inspect the repo before changing anything:
    - `CLAUDE.md` / `AGENTS.md`, `README.md`, `pyproject.toml`, `Makefile`
-   - `onboard.py` — the step list (`STEPS`), the template sentinels
+   - `onboard.py`, the step list (`STEPS`), the template sentinels
      (`_TEMPLATE_PACKAGE_NAME` = `miyamura80-cli-template`, `_TEMPLATE_OWNER` =
      `Miyamura80`, `_TEMPLATE_REPO_NAME` = `CLI-Template`, CLI name `mycli`,
      package fallback `python-template`), and what each step rewrites
@@ -28,7 +28,7 @@ which files it touches and which template sentinels it replaces.
      `cli.py`, `src/cli/`, tests; secrets in `.env` (seeded from `.env.example`);
      hooks in `prek.toml`; media assets in `media/` and `docs/public/`; Jules
      workflows in `.github/workflows/`
-   - Optional systems onboarding does NOT prune (handle manually — step 6):
+   - Optional systems onboarding does NOT prune (handle manually, step 6):
      the `docs/` site, LLM inference (`utils/llm/`, DSPY + LangFuse),
      `init/`+`media/` media generation, CLI telemetry (`src/cli/telemetry.py`),
      and the various CI workflows in `.github/workflows/`
@@ -44,10 +44,10 @@ which files it touches and which template sentinels it replaces.
 3. Run onboarding. `make onboard` (= `uv run python onboard.py`) launches the
    full interactive wizard. To drive individual steps headlessly, invoke the
    Typer subcommands directly:
-   - `uv run python onboard.py deps` — non-interactive: creates `.venv` and runs
+   - `uv run python onboard.py deps`: non-interactive, creates `.venv` and runs
      `uv sync`. Safe to run unattended.
    - `uv run python onboard.py rename` / `cli_name` / `branding` / `env` /
-     `hooks` / `media` / `jules` — each still prompts (via `questionary`), so
+     `hooks` / `media` / `jules`: each still prompts (via `questionary`), so
      run them in a real terminal or feed answers; they are not fully headless.
    - Prefer running `deps` first, then the identity steps (`rename`,
      `cli_name`), then `env`/`hooks`, leaving `media` (needs `GEMINI_API_KEY`)
@@ -58,7 +58,7 @@ which files it touches and which template sentinels it replaces.
      before verifying the CLI.
    - `rename` and `cli_name` are string replacements across tracked files;
      re-running is safe (they detect the current values and offer to re-rename).
-   - `media` is skipped automatically when `GEMINI_API_KEY` is absent — don't
+   - `media` is skipped automatically when `GEMINI_API_KEY` is absent, don't
      force it.
 
 5. Verify the resulting project:
@@ -68,7 +68,7 @@ which files it touches and which template sentinels it replaces.
      large.
 
 6. Prune unused systems, only after the user confirms each one. These are NOT
-   automated — remove deliberately:
+   automated, remove deliberately:
    - Docs site: delete `docs/` and its lint/link/translation workflows
      (`docs-lint.yaml`, `jules-sync-translations.yml`, `markdown-link-lint.yaml`
      as appropriate).
@@ -85,7 +85,7 @@ which files it touches and which template sentinels it replaces.
 - Do not delete the docs site, LLM layer, or CI workflows without explicit user
   confirmation.
 - Do not push to `main`, force-push, or run destructive git commands. Onboarding
-  reads `git remote` only — it never commits or pushes.
+  reads `git remote` only; it never commits or pushes.
 - Interview and confirm the plan before any mutating step; prefer a dry
   discussion of what each step rewrites before running it.
 - Keep secrets in `.env` (git-ignored); never commit real API keys.
