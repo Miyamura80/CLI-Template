@@ -250,7 +250,12 @@ file_len_check: check_uv ## Check Python files don't exceed max line count
 	@uv run python scripts/check_file_length.py
 	@echo "$(GREEN)✅File length check completed.$(RESET)"
 
-ci: ruff vulture import_lint ty docs_lint lint_links check_deps file_len_check ## Run all CI checks (ruff, vulture, import_lint, ty, docs_lint, lint_links, file_len_check)
+lint_immutable_refs: ## Fail if a Dockerfile or GitHub Actions file uses a mutable image tag or action ref
+	@echo "$(YELLOW)🔍Checking for mutable image/action references...$(RESET)"
+	@python3 scripts/check_immutable_refs.py
+	@echo "$(GREEN)✅All images pinned by digest and actions by commit sha.$(RESET)"
+
+ci: ruff vulture import_lint ty docs_lint lint_links check_deps file_len_check lint_immutable_refs ## Run all CI checks (ruff, vulture, import_lint, ty, docs_lint, lint_links, check_deps, file_len_check, lint_immutable_refs)
 	@echo "$(GREEN)✅CI checks completed.$(RESET)"
 
 ########################################################
