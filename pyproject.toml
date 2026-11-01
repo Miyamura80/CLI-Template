@@ -101,6 +101,7 @@ exclude = ["scripts/sync_agent_config.py"]
 
 [tool.deptry]
 ignore = ["DEP002"]
+extend_exclude = ["scripts/sync_agent_config.py"]
 
 [tool.vulture]
 exclude = [
